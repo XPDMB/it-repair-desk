@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- JavaScript error catching overlay for diagnostics -->
+  <script>
+    window.addEventListener('error', function(e) {
+      var errorDiv = document.getElementById('js-error-overlay');
+      if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'js-error-overlay';
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100%';
+        errorDiv.style.background = '#fee2e2';
+        errorDiv.style.color = '#ef4444';
+        errorDiv.style.padding = '1rem';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.borderBottom = '3px solid #ef4444';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.whiteSpace = 'pre-wrap';
+        document.body.appendChild(errorDiv);
+      }
+      errorDiv.innerHTML = '<strong>JavaScript Error:</strong> ' + e.message + ' at ' + e.filename + ':' + e.lineno + ':' + e.colno + '\n' + (e.error ? e.error.stack : '');
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var errorDiv = document.getElementById('js-error-overlay');
+      if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'js-error-overlay';
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100%';
+        errorDiv.style.background = '#fee2e2';
+        errorDiv.style.color = '#ef4444';
+        errorDiv.style.padding = '1rem';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.borderBottom = '3px solid #ef4444';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.whiteSpace = 'pre-wrap';
+        document.body.appendChild(errorDiv);
+      }
+      errorDiv.innerHTML = '<strong>Unhandled Promise Rejection:</strong> ' + e.reason;
+    });
+  </script>
+  <title>IT Repair Desk - ระบบแจ้งซ่อมคอมพิวเตอร์และอุปกรณ์ไอที</title>
+  <!-- Google Fonts: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome CDN for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN for interactive graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase JS Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+        <div class="logo-text">
+          <h1>IT Repair Desk</h1>
+          <span class="logo-subtitle">ระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์และไอที</span>
+        </div>
+      </div>
+      <div class="action-area">
+        <!-- Tabs Navigation for Role and View Separation -->
+        <div class="tab-toggle-container">
+          <button id="tab-user-btn" class="tab-btn active">
+            <i class="fa-solid fa-laptop"></i> หน้าผู้ใช้
+          </button>
+          <button id="tab-admin-btn" class="tab-btn hidden">
+            <i class="fa-solid fa-user-shield"></i> จัดการงานซ่อม
+          </button>
+          <button id="tab-dashboard-btn" class="tab-btn hidden">
+            <i class="fa-solid fa-chart-pie"></i> ภาพรวมแอดมิน
+          </button>
+          <button id="tab-login-btn" class="tab-btn">
+            <i class="fa-solid fa-lock"></i> เข้าสู่ระบบแอดมิน
+          </button>
+          <button id="tab-logout-btn" class="tab-btn hidden">
+            <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+          </button>
+        </div>
+        <button id="open-new-ticket-btn" class="btn btn-primary">
+          <i class="fa-solid fa-plus"></i> แจ้งซ่อมใหม่
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    
+    <!-- Admin Warning Banner (Shown in Admin modes: Manage or Dashboard) -->
+    <div id="admin-mode-banner" class="admin-banner hidden">
+      <div class="banner-content">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="admin-banner-text"><strong>โหมดเจ้าหน้าที่ IT:</strong> คุณสามารถแก้ไข อัปเดตงานซ่อม หรือจัดการบุคลากรได้โดยตรงในส่วนที่เกี่ยวข้อง</span>
+      </div>
+    </div>
+
+    <!-- SECTION 1: Tickets List View (Visible in Tab 1 and Tab 2) -->
+    <div id="tickets-list-section" class="content-section">
+      <!-- Summary Cards (Visible in Tab 1 and Tab 2) -->
+      <section class="summary-section">
+        <div class="stat-card stat-pending">
+          <div class="stat-icon">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">รอรับเรื่อง</span>
+            <h2 id="stat-pending-count" class="stat-value">0</h2>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-processing">
+          <div class="stat-icon">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">กำลังซ่อม</span>
+            <h2 id="stat-processing-count" class="stat-value">0</h2>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-completed">
+          <div class="stat-icon">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">เสร็จแล้ว</span>
+            <h2 id="stat-completed-count" class="stat-value">0</h2>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-urgent">
+          <div class="stat-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="stat-details">
+            <span class="stat-title">เร่งด่วน</span>
+            <h2 id="stat-urgent-count" class="stat-value">0</h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Search & Filters -->
+      <section class="filter-section">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="search-input" placeholder="ค้นหา (รหัสงาน, ผู้แจ้ง, แผนก, รุ่น, อาการเสีย...)">
+        </div>
+        <div class="filter-controls">
+          <div class="select-wrapper">
+            <i class="fa-solid fa-laptop select-icon"></i>
+            <select id="filter-device">
+              <option value="all">ทุกประเภทอุปกรณ์</option>
+              <option value="PC">PC</option>
+              <option value="Notebook">Notebook</option>
+              <option value="All in One">All in One</option>
+              <option value="Printer">Printer</option>
+              <option value="Network">Network</option>
+              <option value="Other">อุปกรณ์อื่น ๆ</option>
+            </select>
+          </div>
+          <div class="select-wrapper">
+            <i class="fa-solid fa-signal select-icon"></i>
+            <select id="filter-status">
+              <option value="all">สถานะทั้งหมด</option>
+              <option value="pending">รอรับเรื่อง</option>
+              <option value="processing">กำลังซ่อม</option>
+              <option value="completed">เสร็จแล้ว</option>
+            </select>
+          </div>
+          <button id="reset-filter-btn" class="btn btn-icon-only" title="ล้างตัวกรอง">
+            <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง
+          </button>
+        </div>
+      </section>
+
+      <!-- Tickets Card Grid -->
+      <section class="tickets-grid-section">
+        <div class="section-title-wrapper">
+          <h2 class="section-title">ระบบแจ้งซ่อมคอมพิวเตอร์ภายในหน่วยงาน</h2>
+          <span id="ticket-results-count" class="results-badge">พบ 0 รายการ</span>
+        </div>
+        
+        <!-- Grid list of tickets -->
+        <div id="tickets-container" class="tickets-grid">
+          <!-- Rendered dynamically by script.js -->
+        </div>
+
+        <!-- Empty state placeholder -->
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-icon">
+            <i class="fa-regular fa-folder-open"></i>
+          </div>
+          <h3>ไม่พบรายการแจ้งซ่อม</h3>
+          <p>ลองเปลี่ยนคำค้นหา หรือกรองสถานะใหม่อีกครั้ง</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- SECTION 2: Admin Dashboard Panel (Visible only in Tab 3) -->
+    <div id="admin-overview-panel" class="content-section hidden">
+      <!-- Dashboard Top: Chart Widgets Grid -->
+      <section class="dashboard-charts-section">
+        <div class="section-title-wrapper" style="margin-bottom: 1.25rem;">
+          <h2 class="section-title">วิเคราะห์ข้อมูลและสถิติงานซ่อม (IT Analytics Dashboard)</h2>
+        </div>
+        
+        <div class="dashboard-charts-grid">
+          <!-- Chart 1: Status Donut Chart -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3><i class="fa-solid fa-circle-half-stroke" style="color:var(--primary-light);"></i> สัดส่วนสถานะงานซ่อม</h3>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chart-status"></canvas>
+            </div>
+          </div>
+          
+          <!-- Chart 2: Device Type Bar Chart -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3><i class="fa-solid fa-chart-bar" style="color:#059669;"></i> เคสซ่อมแยกตามประเภทอุปกรณ์</h3>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chart-device"></canvas>
+            </div>
+          </div>
+          
+          <!-- Chart 3: Department Bar Chart -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3><i class="fa-solid fa-chart-simple" style="color:#d97706;"></i> งานซ่อมเฉลี่ยตามแผนก</h3>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="chart-dept"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard Bottom: Technicians List Section -->
+      <section class="technicians-section" style="margin-top: 2rem;">
+        <div class="section-title-wrapper" style="margin-bottom: 1.25rem;">
+          <h2 class="section-title">รายชื่อช่างและภาระงาน (IT Technicians & Workload)</h2>
+        </div>
+        <div id="tech-list-grid" class="tech-grid">
+          <!-- Rendered dynamically by script.js -->
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Modals & Dialogs Container -->
+  
+  <!-- 1. Modal Form: New Ticket (แจ้งซ่อมใหม่) -->
+  <div id="new-ticket-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-file-signature"></i> แบบฟอร์มแจ้งซ่อมคอมพิวเตอร์และอุปกรณ์ไอที</h2>
+        <button class="close-modal-btn" data-modal="new-ticket-modal">&times;</button>
+      </div>
+      <form id="new-ticket-form">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="reporter-name" class="required">ชื่อผู้แจ้ง</label>
+              <input type="text" id="reporter-name" placeholder="กรอกชื่อ-นามสกุล ของท่าน" required>
+            </div>
+            <div class="form-group">
+              <label for="reporter-dept" class="required">แผนก / ฝ่ายงาน</label>
+              <input type="text" id="reporter-dept" placeholder="เช่น บัญชี, ตลาด, บริหาร, บุคคล" required>
+            </div>
+            <div class="form-group">
+              <label for="reporter-phone" class="required">เบอร์โทรศัพท์ผู้แจ้ง</label>
+              <input type="tel" id="reporter-phone" placeholder="เช่น 081-234-5678" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+            </div>
+            <div class="form-group">
+              <label for="device-type" class="required">ประเภทอุปกรณ์</label>
+              <select id="device-type" required>
+                <option value="" disabled selected>เลือกประเภทอุปกรณ์</option>
+                <option value="PC">PC (เครื่องคอมพิวเตอร์ตั้งโต๊ะ)</option>
+                <option value="Notebook">Notebook (โน้ตบุ๊ก)</option>
+                <option value="All in One">All in One (คอมพิวเตอร์หน้าจอรวมเครื่อง)</option>
+                <option value="Printer">Printer (เครื่องพิมพ์)</option>
+                <option value="Network">Network (อุปกรณ์เครือข่าย/อินเทอร์เน็ต)</option>
+                <option value="Other">อุปกรณ์ไอทีอื่น ๆ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="device-model" class="required">ยี่ห้อ / รุ่น / หมายเลขเครื่อง</label>
+              <input type="text" id="device-model" placeholder="เช่น Dell Optiplex 3280, HP LaserJet..." required>
+            </div>
+            <div class="form-group">
+              <label for="repair-priority" class="required">ระดับความเร่งด่วน</label>
+              <select id="repair-priority" required>
+                <option value="ปกติ" selected>ปกติ</option>
+                <option value="เร่งด่วน">เร่งด่วน</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="repair-detail" class="required">รายละเอียดของปัญหา (เพิ่มเติม)</label>
+            <textarea id="repair-detail" rows="3" placeholder="อธิบายปัญหาและขั้นตอนการเกิดอาการ เพื่อการประเมินที่แม่นยำยิ่งขึ้น" required></textarea>
+          </div>
+          
+          <!-- Image Upload & Preview -->
+          <div class="form-group">
+            <label>รูปภาพหลักฐานความเสียหาย</label>
+            <div class="image-upload-wrapper">
+              <label for="repair-photo" class="upload-label">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>อัปโหลดรูปภาพหลักฐาน (คลิกเพื่อเลือกไฟล์)</span>
+              </label>
+              <input type="file" id="repair-photo" accept="image/*" class="file-input">
+              <div id="photo-preview-container" class="preview-container hidden">
+                <img id="photo-preview" src="" alt="ภาพตัวอย่าง">
+                <button type="button" id="remove-photo-btn" class="btn-remove-photo">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary-outline close-modal-btn" data-modal="new-ticket-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">ส่งข้อมูลแจ้งซ่อม</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Modal Form: Complete Repair (ปิดงานซ่อม) -->
+  <div id="complete-job-modal" class="modal-overlay">
+    <div class="modal-box modal-medium">
+      <div class="modal-header header-success">
+        <h2><i class="fa-solid fa-circle-check"></i> รายงานบันทึกผลการซ่อมเสร็จสิ้น</h2>
+        <button class="close-modal-btn" data-modal="complete-job-modal">&times;</button>
+      </div>
+      <form id="complete-job-form">
+        <input type="hidden" id="complete-ticket-id">
+        <div class="modal-body">
+          <p class="info-note">กรุณากรอกผลการดำเนินงานและผู้รับผิดชอบ เพื่อเป็นข้อมูลประวัติในฐานข้อมูลระบบ</p>
+          
+          <div class="form-group">
+            <label for="assignee-tech" class="required">ช่างผู้รับผิดชอบ</label>
+            <select id="assignee-tech" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; outline: none; background-color: white;">
+              <option value="" disabled selected>-- เลือกช่างผู้รับผิดชอบ --</option>
+              <option value="พ.อ.ท.ชนินทร์ พรมฤทธิ์">พ.อ.ท.ชนินทร์ พรมฤทธิ์</option>
+              <option value="จ.อ.ภูมิดล บุโรดม">จ.อ.ภูมิดล บุโรดม</option>
+              <option value="จ.ต.ภัทร พยุหะ">จ.ต.ภัทร พยุหะ</option>
+              <option value="นายภูรินทร์ อินทร์บุญช่วย">นายภูรินทร์ อินทร์บุญช่วย</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="repair-result" class="required">ผลการซ่อมแซม / การแก้ไขปัญหา</label>
+            <textarea id="repair-result" rows="3" placeholder="ระบุการแก้ไข เช่น ลงวินโดว์ใหม่, เปลี่ยนหัวพิมพ์, เปลี่ยนการ์ดจอตัวใหม่" required></textarea>
+          </div>
+          
+          <!-- After Photo Upload & Preview -->
+          <div class="form-group">
+            <label>รูปภาพยืนยันหลังซ่อมเสร็จสิ้น (ถ้ามี)</label>
+            <div class="image-upload-wrapper">
+              <label for="after-photo" class="upload-label">
+                <i class="fa-solid fa-camera"></i>
+                <span>อัปโหลดรูปภาพหลังการแก้ไข</span>
+              </label>
+              <input type="file" id="after-photo" accept="image/*" class="file-input">
+              <div id="after-preview-container" class="preview-container hidden">
+                <img id="after-preview" src="" alt="ภาพหลังแก้ไข">
+                <button type="button" id="remove-after-photo-btn" class="btn-remove-photo">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary-outline close-modal-btn" data-modal="complete-job-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-success">บันทึกและปิดงานซ่อม</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Modal Form: Edit Ticket (แก้ไขข้อมูลทุกส่วน - สำหรับแอดมินเท่านั้น) -->
+  <div id="edit-ticket-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header" style="border-bottom: 2px solid var(--primary-light);">
+        <h2><i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูลใบแจ้งซ่อม (โหมดแอดมิน)</h2>
+        <button class="close-modal-btn" data-modal="edit-ticket-modal">&times;</button>
+      </div>
+      <form id="edit-ticket-form">
+        <input type="hidden" id="edit-ticket-id">
+        <div class="modal-body">
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-id-display">รหัสรายการ (แก้ไขไม่ได้)</label>
+              <input type="text" id="edit-id-display" readonly style="background-color: var(--secondary-light);">
+            </div>
+            <div class="form-group">
+              <label for="edit-date-display">วันที่แจ้งเข้าระบบ (แก้ไขไม่ได้)</label>
+              <input type="text" id="edit-date-display" readonly style="background-color: var(--secondary-light);">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-reporter" class="required">ผู้แจ้งซ่อม</label>
+              <input type="text" id="edit-reporter" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-dept" class="required">แผนก</label>
+              <input type="text" id="edit-dept" required>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-device-type" class="required">ประเภทอุปกรณ์</label>
+              <select id="edit-device-type" required>
+                <option value="PC">PC</option>
+                <option value="Notebook">Notebook</option>
+                <option value="All in One">All in One</option>
+                <option value="Printer">Printer</option>
+                <option value="Network">Network</option>
+                <option value="Other">อุปกรณ์ไอทีอื่น ๆ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-model" class="required">ยี่ห้อ / รุ่น / หมายเลขเครื่อง</label>
+              <input type="text" id="edit-model" required>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-priority" class="required">ระดับความเร่งด่วน</label>
+              <select id="edit-priority" required>
+                <option value="ปกติ">ปกติ</option>
+                <option value="เร่งด่วน">เร่งด่วน</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-status" class="required">สถานะใบงาน</label>
+              <select id="edit-status" required>
+                <option value="pending">รอรับเรื่อง</option>
+                <option value="processing">กำลังซ่อม</option>
+                <option value="completed">เสร็จแล้ว</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-subject" class="required">หัวข้ออาการ</label>
+              <input type="text" id="edit-subject" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-assignee">ช่างผู้รับผิดชอบ</label>
+              <select id="edit-assignee" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; outline: none; background-color: white;">
+                <option value="">-- ยังไม่ได้มอบหมาย --</option>
+                <option value="พ.อ.ท.ชนินทร์ พรมฤทธิ์">พ.อ.ท.ชนินทร์ พรมฤทธิ์</option>
+                <option value="จ.อ.ภูมิดล บุโรดม">จ.อ.ภูมิดล บุโรดม</option>
+                <option value="จ.ต.ภัทร พยุหะ">จ.ต.ภัทร พยุหะ</option>
+                <option value="นายภูรินทร์ อินทร์บุญช่วย">นายภูรินทร์ อินทร์บุญช่วย</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-detail" class="required">รายละเอียดปัญหา</label>
+            <textarea id="edit-detail" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-result">ผลการดำเนินงานซ่อม (หากปิดงานแล้ว)</label>
+            <textarea id="edit-result" rows="2" placeholder="รายละเอียดวิธีการแก้ไขปัญหา"></textarea>
+          </div>
+
+          <!-- Edit Images Section -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label>รูปหลักฐานการแจ้งซ่อม</label>
+              <div class="image-upload-wrapper">
+                <input type="file" id="edit-photo-input" accept="image/*" class="file-input">
+                <label for="edit-photo-input" class="upload-label" style="padding: 1rem 0.5rem; font-size: 0.8rem;">
+                  <i class="fa-solid fa-file-image"></i> เปลี่ยนรูปภาพหลักฐาน
+                </label>
+                <div id="edit-photo-preview-container" class="preview-container hidden" style="aspect-ratio: 16/10; margin-top:0.5rem;">
+                  <img id="edit-photo-preview" src="" alt="ภาพหลักฐาน">
+                  <button type="button" id="remove-edit-photo-btn" class="btn-remove-photo">&times;</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>รูปถ่ายหลังการซ่อมเสร็จสิ้น</label>
+              <div class="image-upload-wrapper">
+                <input type="file" id="edit-after-photo-input" accept="image/*" class="file-input">
+                <label for="edit-after-photo-input" class="upload-label" style="padding: 1rem 0.5rem; font-size: 0.8rem;">
+                  <i class="fa-solid fa-circle-check"></i> เปลี่ยนรูปหลังแก้ไข
+                </label>
+                <div id="edit-after-preview-container" class="preview-container hidden" style="aspect-ratio: 16/10; margin-top:0.5rem;">
+                  <img id="edit-after-preview" src="" alt="ภาพหลังแก้ไข">
+                  <button type="button" id="remove-edit-after-photo-btn" class="btn-remove-photo">&times;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary-outline close-modal-btn" data-modal="edit-ticket-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> บันทึกการเปลี่ยนแปลง</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Modal Form: Admin Login (เข้าสู่ระบบแอดมิน) -->
+  <div id="admin-login-modal" class="modal-overlay">
+    <div class="modal-box modal-medium">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-lock"></i> เข้าสู่ระบบเจ้าหน้าที่ (Admin Login)</h2>
+        <button class="close-modal-btn" data-modal="admin-login-modal">&times;</button>
+      </div>
+      <form id="admin-login-form">
+        <div class="modal-body">
+          <p class="info-note">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งานในฐานะเจ้าหน้าที่ IT / แอดมิน</p>
+          <div class="form-group">
+            <label for="admin-password" class="required">รหัสผ่านแอดมิน</label>
+            <input type="password" id="admin-password" placeholder="ระบุรหัสผ่านแอดมิน" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; outline: none;">
+          </div>
+          <div id="login-error-msg" style="color: #ef4444; font-size: 0.82rem; margin-top: 0.5rem; display: none;">
+            <i class="fa-solid fa-triangle-exclamation"></i> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary-outline close-modal-btn" data-modal="admin-login-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">ยืนยันรหัสผ่าน</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Modal Image Lightbox: ขยายดูรูปภาพ -->
+  <div id="image-lightbox" class="modal-overlay lightbox-overlay">
+    <div class="lightbox-content">
+      <button class="close-lightbox-btn" id="close-lightbox-btn">&times;</button>
+      <div class="lightbox-body">
+        <img id="lightbox-image" src="" alt="ภาพหลักฐานการซ่อม">
+        <p id="lightbox-caption" class="lightbox-caption">รายละเอียดของรูปภาพ</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>&copy; 2026 IT Service Department. พัฒนาขึ้นสำหรับระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์ภายในองค์กร (ต้นแบบ Static Web)</p>
+      <p class="footer-note">ข้อมูลทั้งหมดจะถูกบันทึกไว้ในเบราว์เซอร์นี้ (LocalStorage) เท่านั้น</p>
+    </div>
+  </footer>
+
+  <!-- Custom JS -->
+  <script src="script.js"></script>
+</body>
+</html>
