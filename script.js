@@ -222,6 +222,10 @@ let tempUploadPhoto = '';
 let tempUploadAfterPhoto = '';
 let tempEditPhoto = '';
 let tempEditAfterPhoto = '';
+let tempUploadFile = null;
+let tempUploadAfterFile = null;
+let tempEditFile = null;
+let tempEditAfterFile = null;
 
 // ----------------------------------------------------
 // 2. Select DOM Elements
@@ -987,6 +991,31 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
   });
 });
 
+// Helper to upload image to Supabase Storage
+async function uploadImageToSupabase(file) {
+  if (!useSupabase || !supabaseClient || !file) return null;
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabaseClient.storage
+      .from('ticket-images')
+      .upload(filePath, file);
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabaseClient.storage
+      .from('ticket-images')
+      .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
+  } catch (e) {
+    console.error("Error uploading image to Supabase:", e);
+    return null;
+  }
+}
+
 // Click outside modal triggers cancel closing
 window.addEventListener('click', function(e) {
   if (e.target.classList.contains('modal-overlay')) {
@@ -1007,10 +1036,12 @@ imageLightbox.addEventListener('click', (e) => {
 // ----------------------------------------------------
 
 // Convert and preview helper
-function handleImageFileSelect(inputElement, previewContainer, previewImage, callback) {
+function handleImageFileSelect(inputElement, previewContainer, previewImage, callback, fileCallback) {
   inputElement.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (fileCallback) fileCallback(file);
 
     const reader = new FileReader();
     reader.onload = function(evt) {
@@ -1023,14 +1054,23 @@ function handleImageFileSelect(inputElement, previewContainer, previewImage, cal
 }
 
 // Register file handlers
-handleImageFileSelect(repairPhotoInput, photoPreviewContainer, photoPreview, (data) => tempUploadPhoto = data);
-handleImageFileSelect(afterPhotoInput, afterPreviewContainer, afterPreview, (data) => tempUploadAfterPhoto = data);
-handleImageFileSelect(editPhotoInput, editPhotoPreviewContainer, editPhotoPreview, (data) => tempEditPhoto = data);
-handleImageFileSelect(editAfterPhotoInput, editAfterPreviewContainer, editAfterPreview, (data) => tempEditAfterPhoto = data);
+handleImageFileSelect(repairPhotoInput, photoPreviewContainer, photoPreview, 
+  (data) => tempUploadPhoto = data, 
+  (file) => tempUploadFile = file);
+handleImageFileSelect(afterPhotoInput, afterPreviewContainer, afterPreview, 
+  (data) => tempUploadAfterPhoto = data, 
+  (file) => tempUploadAfterFile = file);
+handleImageFileSelect(editPhotoInput, editPhotoPreviewContainer, editPhotoPreview, 
+  (data) => tempEditPhoto = data, 
+  (file) => tempEditFile = file);
+handleImageFileSelect(editAfterPhotoInput, editAfterPreviewContainer, editAfterPreview, 
+  (data) => tempEditAfterPhoto = data, 
+  (file) => tempEditAfterFile = file);
 
 // Remove preview buttons
 removePhotoBtn.addEventListener('click', () => {
   tempUploadPhoto = '';
+  tempUploadFile = null;
   repairPhotoInput.value = '';
   photoPreviewContainer.classList.add('hidden');
   photoPreview.src = '';
@@ -1038,6 +1078,7 @@ removePhotoBtn.addEventListener('click', () => {
 
 removeAfterPhotoBtn.addEventListener('click', () => {
   tempUploadAfterPhoto = '';
+  tempUploadAfterFile = null;
   afterPhotoInput.value = '';
   afterPreviewContainer.classList.add('hidden');
   afterPreview.src = '';
@@ -1045,6 +1086,7 @@ removeAfterPhotoBtn.addEventListener('click', () => {
 
 removeEditPhotoBtn.addEventListener('click', () => {
   tempEditPhoto = '';
+  tempEditFile = null;
   editPhotoInput.value = '';
   editPhotoPreviewContainer.classList.add('hidden');
   editPhotoPreview.src = '';
@@ -1052,6 +1094,7 @@ removeEditPhotoBtn.addEventListener('click', () => {
 
 removeEditAfterPhotoBtn.addEventListener('click', () => {
   tempEditAfterPhoto = '';
+  tempEditAfterFile = null;
   editAfterPhotoInput.value = '';
   editAfterPreviewContainer.classList.add('hidden');
   editAfterPreview.src = '';
