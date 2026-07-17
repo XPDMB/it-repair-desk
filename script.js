@@ -521,6 +521,10 @@ function renderTickets() {
               <span class="meta-label">เบอร์โทร</span>
               <span class="meta-value">${t.phone || '-'}</span>
             </div>
+            <div class="meta-item">
+              <span class="meta-label">ช่างรับผิดชอบ</span>
+              <span class="meta-value" style="color: var(--primary-light); font-weight: 600;">${t.assignee || '<span style="color:#94a3b8; font-weight:400;">ยังไม่ระบุ</span>'}</span>
+            </div>
             <div class="meta-item" style="grid-column: span 1;">
               <span class="meta-label">รูปแจ้งซ่อม</span>
               ${beforePhotoHTML}
