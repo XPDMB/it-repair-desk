@@ -1,54 +1,55 @@
 /* Custom styling for IT Repair Desk (Unified Prototype with Charts) */
 
 :root {
-  /* Design system tokens & color palette */
-  --primary: #1e40af;       /* Deep Cobalt Blue */
-  --primary-light: #3b82f6; /* Modern Blue */
-  --primary-dark: #1e3a8a;  /* Dark Blue */
-  --primary-rgb: 30, 64, 175;
+  /* Premium Design System Tokens & Color Palette */
+  --primary: #4f46e5;       /* Premium Indigo */
+  --primary-light: #6366f1; /* Vibrant Indigo */
+  --primary-dark: #312e81;  /* Midnight Indigo */
+  --primary-rgb: 79, 70, 229;
   
   --secondary: #64748b;     /* Slate Gray */
-  --secondary-light: #f1f5f9;
+  --secondary-light: #f8fafc;
   
-  /* Status Colors */
-  --status-pending-text: #2563eb;
-  --status-pending-bg: #eff6ff;
-  --status-pending-border: #bfdbfe;
+  /* Polished Status Colors */
+  --status-pending-text: #d97706;  /* Amber */
+  --status-pending-bg: #fffbeb;
+  --status-pending-border: #fde68a;
   
-  --status-processing-text: #059669;
-  --status-processing-bg: #ecfdf5;
-  --status-processing-border: #a7f3d0;
+  --status-processing-text: #2563eb; /* Blue */
+  --status-processing-bg: #eff6ff;
+  --status-processing-border: #bfdbfe;
   
-  --status-completed-text: #16a34a;
-  --status-completed-bg: #f0fdf4;
-  --status-completed-border: #bbf7d0;
+  --status-completed-text: #059669;  /* Emerald */
+  --status-completed-bg: #ecfdf5;
+  --status-completed-border: #a7f3d0;
 
-  --status-urgent-text: #dc2626;
-  --status-urgent-bg: #fef2f2;
-  --status-urgent-border: #fecaca;
+  --status-urgent-text: #e11d48;    /* Rose */
+  --status-urgent-bg: #fff1f2;
+  --status-urgent-border: #fecdd3;
   
-  /* UI Colors */
-  --bg-main: #f8fafc;
-  --card-bg: rgba(255, 255, 255, 0.95);
+  /* Modern UI Colors */
+  --bg-main: #f4f7fa; /* Slightly cooler, soft background */
+  --card-bg: rgba(255, 255, 255, 0.98); /* Glassy touch */
   --border-color: #e2e8f0;
   --text-dark: #0f172a;
   --text-muted: #475569;
   --text-light: #ffffff;
   
-  /* Shadows & Radius */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
-  --shadow-premium: 0 12px 25px -5px rgba(30, 64, 175, 0.08), 0 8px 10px -6px rgba(30, 64, 175, 0.05);
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* Elegant Shadows & Radius */
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 12px 24px rgba(15, 23, 42, 0.06), 0 4px 10px rgba(15, 23, 42, 0.04);
+  --shadow-premium: 0 20px 40px -10px rgba(79, 70, 229, 0.15), 0 10px 20px -5px rgba(79, 70, 229, 0.08);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
   
-  /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Fluid Transitions */
+  --transition-fast: 0.2s ease-out;
+  --transition-normal: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy smooth */
+  --transition-slow: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Base Styles */
@@ -683,10 +684,10 @@ body {
   border: 1px solid var(--status-completed-border);
 }
 
-/* Problem description box in light green */
+/* Problem description box in premium neutral */
 .card-problem-desc {
-  background-color: #f0fdf4;
-  border-left: 3px solid #22c55e;
+  background-color: var(--secondary-light);
+  border-left: 3px solid var(--primary-light);
   border-radius: 4px;
   padding: 0.65rem 0.85rem;
   margin-bottom: 0.75rem;
@@ -695,7 +696,7 @@ body {
 .card-problem-desc h4 {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #166534;
+  color: var(--primary-dark);
   margin-bottom: 0.15rem;
 }
 
@@ -1460,18 +1461,68 @@ body {
   background-color: var(--danger);
 }
 
-/* Mobile & Small Screen viewports */
+/* =========================================================
+   RESPONSIVE DESIGN & MEDIA QUERIES (PC, iPad, Mobile)
+   ========================================================= */
+
+/* General Smoothness (Scroll & Transitions) */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Tablet & iPad (Medium Screens: up to 992px) */
+@media (max-width: 992px) {
+  .main-content {
+    padding: 1.25rem 1rem;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .select-wrapper {
+    flex: 1;
+  }
+  
+  .select-wrapper select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Grid stat cards 2x2 on tablets */
+  .summary-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Tickets Grid: 2 columns on iPad */
+  .tickets-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  /* Dashboard charts layout adjust */
+  .dashboard-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* Mobile Devices (Small Screens: up to 576px) */
 @media (max-width: 576px) {
-  /* On mobile: Let the modal render at natural height, and scroll using the overlay wrapper.
-     This completely prevents any scrolling bugs when the virtual keyboard pops up. */
+  /* Prevent Modal overlap with virtual keyboard */
   .modal-overlay {
     padding: 1rem 0.5rem;
-    align-items: flex-start; /* Ensure modal top aligns so user can scroll down naturally */
+    align-items: flex-start;
   }
 
   .modal-box {
-    max-height: none; /* Unlock max-height restriction */
-    overflow: visible; /* Let overlay handle scroll */
+    max-height: none;
+    overflow: visible;
   }
   
   .modal-box form {
@@ -1480,14 +1531,11 @@ body {
   }
 
   .modal-body {
-    overflow-y: visible; /* Disable inner body scroll since overlay is the scroll wrapper */
+    overflow-y: visible;
   }
-}
 
-/* Smartphone Viewports */
-@media (max-width: 480px) {
   .app-header {
-    padding: 1rem;
+    padding: 0.85rem 1rem;
   }
 
   .logo-text h1 {
@@ -1495,46 +1543,50 @@ body {
   }
 
   .logo-subtitle {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
   }
 
   .tab-btn {
     font-size: 0.75rem;
-    padding: 0.5rem 0.25rem;
-    gap: 0.2rem;
+    padding: 0.6rem 0.4rem;
+    gap: 0.25rem;
   }
 
-  /* Grid stat cards 2x2 on mobile for space conservation */
-  .summary-section {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.65rem;
-    margin-bottom: 1rem;
+  .btn {
+    padding: 0.6rem 1rem;
+    min-height: 44px; /* Touch target size optimization */
   }
 
+  /* Increase tap area for inputs and dropdowns */
+  .form-group input[type="text"],
+  .form-group select,
+  .form-group textarea,
+  .search-box input,
+  .select-wrapper select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents auto-zoom on iOS */
+  }
+
+  /* Stat cards spacing */
   .stat-card {
-    padding: 0.75rem;
-    gap: 0.6rem;
+    padding: 1rem;
+    gap: 0.75rem;
   }
 
   .stat-icon {
-    width: 34px;
-    height: 34px;
-    font-size: 1rem;
-    border-radius: var(--radius-sm);
-  }
-
-  .stat-title {
-    font-size: 0.7rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
   }
 
   .stat-value {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
 
-  /* Card grid 100% width on mobile */
+  /* Tickets Grid: 1 column on Mobile */
   .tickets-grid {
     grid-template-columns: 1fr;
-    gap: 0.85rem;
+    gap: 1rem;
   }
 
   .ticket-card {
@@ -1547,100 +1599,18 @@ body {
     font-size: 1.1rem;
   }
 
-  .card-title-details h3 {
-    font-size: 0.9rem;
-  }
-
-  .card-problem-desc {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .card-problem-desc h4 {
-    font-size: 0.75rem;
-  }
-
-  .card-problem-desc p {
-    font-size: 0.78rem;
-  }
-
   .card-meta-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 0.4rem 0.5rem;
-  }
-
-  .meta-label {
-    font-size: 0.65rem;
-  }
-
-  .meta-value {
-    font-size: 0.75rem;
+    gap: 0.5rem;
   }
 
   .status-btn-option {
-    font-size: 0.7rem;
-    padding: 0.4rem 0.15rem;
-  }
-
-  .section-title {
-    font-size: 0.95rem;
-  }
-
-  .results-badge {
-    font-size: 0.72rem;
-    padding: 0.15rem 0.5rem;
-  }
-
-  /* Modal responsive squeeze */
-  .modal-overlay {
-    padding: 1rem 0.5rem;
-  }
-
-  .modal-header {
-    padding: 0.75rem 0.85rem;
-  }
-
-  .modal-header h2 {
-    font-size: 0.9rem;
-  }
-
-  .modal-body {
-    padding: 0.85rem;
-  }
-
-  .form-group {
-    margin-bottom: 0.65rem;
-  }
-
-  .form-group label {
     font-size: 0.75rem;
-    margin-bottom: 0.2rem;
+    padding: 0.5rem 0.15rem;
+    min-height: 40px; /* Better touch target for status buttons */
   }
-
-  .form-group input[type="text"],
-  .form-group select,
-  .form-group textarea {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.78rem;
-  }
-
-  .upload-label {
-    padding: 0.85rem 0.5rem;
-  }
-
-  .upload-label i {
-    font-size: 1.1rem;
-  }
-
-  .upload-label span {
-    font-size: 0.72rem;
-  }
-
-  .modal-footer {
-    padding: 0.65rem 0.85rem;
-  }
-
-  .btn {
-    font-size: 0.8rem;
-    padding: 0.5rem 1rem;
+  
+  .section-title {
+    font-size: 1rem;
   }
 }

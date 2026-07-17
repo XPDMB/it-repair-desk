@@ -265,6 +265,8 @@ const emptyState = document.getElementById('empty-state');
 // Form Modals Elements
 const newTicketModal = document.getElementById('new-ticket-modal');
 const newTicketForm = document.getElementById('new-ticket-form');
+const assignJobModal = document.getElementById('assign-job-modal');
+const assignJobForm = document.getElementById('assign-job-form');
 const completeJobModal = document.getElementById('complete-job-modal');
 const completeJobForm = document.getElementById('complete-job-form');
 const editTicketModal = document.getElementById('edit-ticket-modal');
@@ -568,7 +570,7 @@ function renderDashboardCharts() {
         labels: ['รอรับเรื่อง', 'กำลังซ่อม', 'เสร็จแล้ว'],
         datasets: [{
           data: [pendingCount, processingCount, completedCount],
-          backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+          backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'], /* Amber, Blue, Emerald */
           borderColor: '#ffffff',
           borderWidth: 2
         }]
@@ -827,25 +829,23 @@ function adminUpdateStatus(ticketId, nextStatus) {
     tickets[index].afterPhoto = '';
     updateFields = { status: 'pending', assignee: '', repair_result: '', after_photo: '' };
     saveStateAndRender();
+    updateSupabaseStatus(ticketId, updateFields);
   } else if (nextStatus === 'processing') {
-    tickets[index].status = 'processing';
-    tickets[index].repairResult = '';
-    tickets[index].afterPhoto = '';
-    // Automatically assign generic text helper if empty
-    if (!tickets[index].assignee) {
-      tickets[index].assignee = 'ช่างไอที';
-    }
-    updateFields = { status: 'processing', repair_result: '', after_photo: '', assignee: tickets[index].assignee };
-    saveStateAndRender();
+    // Open Assign Job Modal instead of changing immediately
+    document.getElementById('assign-ticket-id').value = ticketId;
+    document.getElementById('assign-tech').value = tickets[index].assignee || '';
+    openModal(assignJobModal);
   }
+}
 
+// Helper to push status updates to Supabase
+function updateSupabaseStatus(ticketId, updateFields) {
   if (useSupabase && supabaseClient) {
     supabaseClient.from('tickets').update(updateFields).eq('id', ticketId).then(({ error }) => {
       if (error) console.error("Supabase update status failed:", error);
     });
   }
 }
-
 // Admin opens complete-job modal
 function adminOpenCompleteModal(ticketId) {
   const ticket = tickets.find(t => t.id === ticketId);
@@ -1117,7 +1117,7 @@ resetFilterBtn.addEventListener('click', () => {
 // ----------------------------------------------------
 
 // Form submit: New Ticket reporting
-newTicketForm.addEventListener('submit', function(e) {
+newTicketForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   
   const reporter = document.getElementById('reporter-name').value.trim();
@@ -1150,6 +1150,22 @@ newTicketForm.addEventListener('submit', function(e) {
   
   // Setup photo or generate dynamic placeholder if empty
   let photoData = tempUploadPhoto;
+  
+  if (tempUploadFile && useSupabase && supabaseClient) {
+    const submitBtn = newTicketForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลดรูปภาพ...';
+    submitBtn.disabled = true;
+
+    const uploadedUrl = await uploadImageToSupabase(tempUploadFile);
+    if (uploadedUrl) {
+       photoData = uploadedUrl;
+    }
+
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
+  
   if (!photoData) {
     photoData = generatePlaceholderImage('แจ้งซ่อม: ' + model, '#fee2e2', '#ef4444');
   }
@@ -1199,8 +1215,30 @@ newTicketForm.addEventListener('submit', function(e) {
   }
 });
 
+// Form submit: Assign Job (กำลังซ่อม)
+assignJobForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const ticketId = document.getElementById('assign-ticket-id').value;
+  const assignee = document.getElementById('assign-tech').value;
+  
+  const index = tickets.findIndex(t => t.id === ticketId);
+  if (index === -1) return;
+
+  tickets[index].status = 'processing';
+  tickets[index].assignee = assignee;
+  tickets[index].repairResult = '';
+  tickets[index].afterPhoto = '';
+  
+  const updateFields = { status: 'processing', assignee: assignee, repair_result: '', after_photo: '' };
+  
+  saveStateAndRender();
+  closeModal('assign-job-modal');
+  updateSupabaseStatus(ticketId, updateFields);
+});
+
 // Form submit: Close job (เสร็จสิ้นการซ่อม)
-completeJobForm.addEventListener('submit', function(e) {
+completeJobForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   
   const ticketId = document.getElementById('complete-ticket-id').value;
@@ -1221,6 +1259,22 @@ completeJobForm.addEventListener('submit', function(e) {
     tickets[index].afterPhoto = generatePlaceholderImage('แก้ไขเสร็จสิ้น: ' + tickets[index].model, '#d1fae5', '#10b981');
   }
 
+  // Handle actual file upload if present
+  if (tempUploadAfterFile && useSupabase && supabaseClient) {
+    const submitBtn = completeJobForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลดรูปภาพ...';
+    submitBtn.disabled = true;
+    
+    const uploadedUrl = await uploadImageToSupabase(tempUploadAfterFile);
+    if (uploadedUrl) {
+      tickets[index].afterPhoto = uploadedUrl;
+    }
+    
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
+
   saveStateAndRender();
   closeModal('complete-job-modal');
 
@@ -1238,7 +1292,7 @@ completeJobForm.addEventListener('submit', function(e) {
 });
 
 // Form submit: Edit Ticket (แก้ไขทุกส่วน - แอดมิน)
-editTicketForm.addEventListener('submit', function(e) {
+editTicketForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   
   const ticketId = document.getElementById('edit-ticket-id').value;
@@ -1272,6 +1326,30 @@ editTicketForm.addEventListener('submit', function(e) {
   // Assign image updates
   tickets[index].photo = tempEditPhoto;
   tickets[index].afterPhoto = tempEditAfterPhoto;
+
+  if (useSupabase && supabaseClient) {
+    const submitBtn = editTicketForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    if (tempEditFile || tempEditAfterFile) {
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลดรูปภาพ...';
+      submitBtn.disabled = true;
+    }
+    
+    if (tempEditFile) {
+      const uploadedUrl = await uploadImageToSupabase(tempEditFile);
+      if (uploadedUrl) tickets[index].photo = uploadedUrl;
+    }
+    if (tempEditAfterFile) {
+      const uploadedUrl = await uploadImageToSupabase(tempEditAfterFile);
+      if (uploadedUrl) tickets[index].afterPhoto = uploadedUrl;
+    }
+    
+    if (tempEditFile || tempEditAfterFile) {
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+    }
+  }
 
   saveStateAndRender();
   closeModal('edit-ticket-modal');

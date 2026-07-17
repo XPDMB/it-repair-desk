@@ -345,6 +345,36 @@
       </form>
     </div>
   </div>
+  <!-- 1.5 Modal Form: Assign Job (มอบหมายงาน) -->
+  <div id="assign-job-modal" class="modal-overlay">
+    <div class="modal-box modal-medium">
+      <div class="modal-header header-processing" style="border-bottom: 2px solid var(--status-processing-text);">
+        <h2><i class="fa-solid fa-user-plus"></i> มอบหมายงานให้ช่าง (กำลังซ่อม)</h2>
+        <button class="close-modal-btn" data-modal="assign-job-modal">&times;</button>
+      </div>
+      <form id="assign-job-form">
+        <input type="hidden" id="assign-ticket-id">
+        <div class="modal-body">
+          <p class="info-note">กรุณาเลือกช่างผู้รับผิดชอบงานนี้ เพื่อบันทึกลงระบบ</p>
+          
+          <div class="form-group">
+            <label for="assign-tech" class="required">ช่างผู้รับผิดชอบ</label>
+            <select id="assign-tech" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; outline: none; background-color: white;">
+              <option value="" disabled selected>-- เลือกช่างผู้รับผิดชอบ --</option>
+              <option value="พ.อ.ท.ชนินทร์ พรมฤทธิ์">พ.อ.ท.ชนินทร์ พรมฤทธิ์</option>
+              <option value="จ.อ.ภูมิดล บุโรดม">จ.อ.ภูมิดล บุโรดม</option>
+              <option value="จ.ต.ภัทร พยุหะ">จ.ต.ภัทร พยุหะ</option>
+              <option value="นายภูรินทร์ อินทร์บุญช่วย">นายภูรินทร์ อินทร์บุญช่วย</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary-outline close-modal-btn" data-modal="assign-job-modal">ยกเลิก</button>
+          <button type="submit" class="btn" style="background-color: var(--status-processing-text); color: white;">มอบหมายงานและเริ่มซ่อม</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- 2. Modal Form: Complete Repair (ปิดงานซ่อม) -->
   <div id="complete-job-modal" class="modal-overlay">
