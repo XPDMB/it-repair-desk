@@ -420,7 +420,7 @@ function renderTickets() {
       
       // Floating Admin actions
       let adminActionsHTML = '';
-      if (currentRole === 'admin') {
+      if (currentRole === 'admin' && t.status !== 'completed') {
         adminActionsHTML = `
           <div class="card-admin-actions">
             <button class="card-admin-btn edit" onclick="openEditModal('${t.id}')" title="แก้ไขทุกส่วน">
@@ -474,10 +474,18 @@ function renderTickets() {
       const activeCompletedClass = t.status === 'completed' ? 'active-completed' : '';
       
       // Click event attributes for admin vs disabled for user
-      const isInteractiveClass = currentRole === 'admin' ? 'admin-interactive' : 'user-readonly';
-      const onPendingClick = currentRole === 'admin' ? `onclick="adminUpdateStatus('${t.id}', 'pending')"` : '';
-      const onProcessingClick = currentRole === 'admin' ? `onclick="adminUpdateStatus('${t.id}', 'processing')"` : '';
-      const onCompletedClick = currentRole === 'admin' ? `onclick="adminOpenCompleteModal('${t.id}')"` : '';
+      let isInteractiveClass = currentRole === 'admin' ? 'admin-interactive' : 'user-readonly';
+      let onPendingClick = currentRole === 'admin' ? `onclick="adminUpdateStatus('${t.id}', 'pending')"` : '';
+      let onProcessingClick = currentRole === 'admin' ? `onclick="adminUpdateStatus('${t.id}', 'processing')"` : '';
+      let onCompletedClick = currentRole === 'admin' ? `onclick="adminOpenCompleteModal('${t.id}')"` : '';
+
+      // If completed, lock all status buttons so it cannot be reverted
+      if (t.status === 'completed') {
+        isInteractiveClass = 'user-readonly';
+        onPendingClick = '';
+        onProcessingClick = '';
+        onCompletedClick = '';
+      }
 
       card.innerHTML = `
         ${adminActionsHTML}
