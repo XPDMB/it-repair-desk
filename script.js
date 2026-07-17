@@ -888,8 +888,27 @@ function openEditModal(ticketId) {
   document.getElementById('edit-result').value = ticket.repairResult || '';
 
   // Setup technician text input value
-  document.getElementById('edit-assignee').value = ticket.assignee || '';
-
+  const editAssigneeInput = document.getElementById('edit-assignee');
+  const editResultInput = document.getElementById('edit-result');
+  editAssigneeInput.value = ticket.assignee || '';
+  
+  if (ticket.status === 'completed') {
+    editAssigneeInput.disabled = true;
+    editAssigneeInput.style.backgroundColor = 'var(--secondary-light)';
+    editAssigneeInput.style.cursor = 'not-allowed';
+    
+    editResultInput.readOnly = true;
+    editResultInput.style.backgroundColor = 'var(--secondary-light)';
+    editResultInput.style.cursor = 'not-allowed';
+  } else {
+    editAssigneeInput.disabled = false;
+    editAssigneeInput.style.backgroundColor = 'white';
+    editAssigneeInput.style.cursor = 'pointer';
+    
+    editResultInput.readOnly = false;
+    editResultInput.style.backgroundColor = 'white';
+    editResultInput.style.cursor = 'text';
+  }
   // Initialize edit photos preview states
   tempEditPhoto = ticket.photo || '';
   if (tempEditPhoto) {
