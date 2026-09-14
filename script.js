@@ -128,8 +128,7 @@ const defaultTickets = [
   }
 ];
 
-// Supabase public configuration. The publishable key is safe in the browser only
-// when Row Level Security policies are enabled (see supabase-security.sql).
+// Supabase public configuration. Never place a service_role key in browser code.
 const SUPABASE_URL = 'https://zkkhqenmkrkxhippxger.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_0d7umoa1boSzAmPjByVbZg_WWu6Qs32';
 
@@ -150,7 +149,7 @@ if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY &&
 
 // Function to fetch tickets from Supabase DB
 async function fetchTicketsFromSupabase() {
-  if (!useSupabase || !supabaseClient || !isAdminLoggedIn) return;
+  if (!useSupabase || !supabaseClient) return;
   try {
     const { data, error } = await supabaseClient
       .from('tickets')
@@ -184,35 +183,23 @@ async function fetchTicketsFromSupabase() {
   }
 }
 
-const USER_TICKETS_STORAGE_KEY = 'it_user_tickets_v2';
-
-function loadLocalTickets() {
-  if (useSupabase) {
-    try {
-      const storedTickets = localStorage.getItem(USER_TICKETS_STORAGE_KEY);
-      return storedTickets ? JSON.parse(storedTickets) : [];
-    } catch (e) {
-      console.warn("Storage access denied: falling back to memory storage.", e);
-      return [];
-    }
-  }
-  return defaultTickets.map(ticket => ({ ...ticket }));
-}
-
-// Public users only see tickets created in their own browser. Admins load the
-// shared list after Supabase confirms their authenticated role.
-let tickets = loadLocalTickets();
+let tickets = defaultTickets;
 try {
-  localStorage.removeItem('it_tickets');
+  const storedTickets = localStorage.getItem('it_tickets');
+  if (storedTickets) tickets = JSON.parse(storedTickets);
 } catch (e) {
-  console.warn("Could not remove legacy local data.", e);
+  console.warn("Storage access denied: falling back to memory storage.", e);
 }
 
 
 let currentRole = 'user'; // 'user' or 'admin'
 
 let isAdminLoggedIn = false;
-let currentAdminUser = null;
+try {
+  isAdminLoggedIn = sessionStorage.getItem('is_admin_logged_in') === 'true';
+} catch (e) {
+  console.warn("Session storage access denied: falling back to memory storage.", e);
+}
 
 // IT Technicians configuration list
 const techniciansList = [
@@ -252,7 +239,6 @@ const adminOverviewPanel = document.getElementById('admin-overview-panel');
 const ticketsListSection = document.getElementById('tickets-list-section');
 const adminLoginModal = document.getElementById('admin-login-modal');
 const adminLoginForm = document.getElementById('admin-login-form');
-const adminEmailInput = document.getElementById('admin-email');
 const adminPasswordInput = document.getElementById('admin-password');
 const loginErrorMsg = document.getElementById('login-error-msg');
 const loginErrorText = document.getElementById('login-error-text');
@@ -317,14 +303,12 @@ const closeLightboxBtn = document.getElementById('close-lightbox-btn');
 // ----------------------------------------------------
 // Local Storage sync — บันทึกเฉพาะข้อมูลหลัก ไม่รวมรูปภาพ (Base64 ใหญ่เกิน)
 function saveStateToLocalStorage() {
-  // Never copy the shared admin dataset to a public browser profile.
-  if (isAdminLoggedIn) return;
   try {
     const ticketsWithoutPhotos = tickets.map(t => {
       const { photo, afterPhoto, ...rest } = t;
       return rest;
     });
-    localStorage.setItem(USER_TICKETS_STORAGE_KEY, JSON.stringify(ticketsWithoutPhotos));
+    localStorage.setItem('it_tickets', JSON.stringify(ticketsWithoutPhotos));
   } catch (e) {
     console.warn("Could not save to localStorage:", e);
   }
@@ -352,39 +336,9 @@ function setLoginError(message) {
   loginErrorMsg.style.display = 'block';
 }
 
-async function userHasAdminRole(userId) {
-  if (!useSupabase || !supabaseClient || !userId) return false;
-  const { data, error } = await supabaseClient
-    .from('admin_users')
-    .select('user_id')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Admin role lookup failed:', error);
-    return false;
-  }
-  return Boolean(data);
-}
-
-async function applyAuthenticatedSession(session) {
-  const user = session?.user || null;
-  const allowed = user ? await userHasAdminRole(user.id) : false;
-  currentAdminUser = allowed ? user : null;
-  isAdminLoggedIn = allowed;
-
-  if (allowed) {
-    await fetchTicketsFromSupabase();
-    setRoleMode('admin-manage');
-  } else {
-    tickets = loadLocalTickets();
-    setRoleMode('user');
-  }
-}
-
 function requireAdmin() {
-  if (isAdminLoggedIn && currentAdminUser) return true;
-  alert('เซสชันเจ้าหน้าที่หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+  if (isAdminLoggedIn) return true;
+  alert('กรุณาเข้าสู่ระบบเจ้าหน้าที่ก่อนดำเนินการ');
   setRoleMode('user');
   return false;
 }
@@ -1075,66 +1029,40 @@ tabDashboardBtn.addEventListener('click', () => setRoleMode('admin-dashboard'));
 
 // Login & Logout switches
 tabLoginBtn.addEventListener('click', () => {
-  adminEmailInput.value = '';
   adminPasswordInput.value = '';
   loginErrorMsg.style.display = 'none';
   openModal(adminLoginModal);
 });
 
-tabLogoutBtn.addEventListener('click', async () => {
+tabLogoutBtn.addEventListener('click', () => {
   if (confirm('คุณต้องการออกจากระบบเจ้าหน้าที่หรือไม่?')) {
-    if (useSupabase && supabaseClient) {
-      const { error } = await supabaseClient.auth.signOut();
-      if (error) {
-        alert('ออกจากระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
-        return;
-      }
-    }
     isAdminLoggedIn = false;
-    currentAdminUser = null;
-    tickets = loadLocalTickets();
+    try {
+      sessionStorage.removeItem('is_admin_logged_in');
+    } catch (e) {
+      console.warn("Could not remove from sessionStorage:", e);
+    }
     setRoleMode('user');
   }
 });
 
-// Admin authentication is verified by Supabase Auth and the admin_users table.
-adminLoginForm.addEventListener('submit', async function(e) {
+// Simple password gate for this single-admin internal deployment.
+// This is a UI convenience only; a static website cannot keep this password secret.
+adminLoginForm.addEventListener('submit', function(e) {
   e.preventDefault();
-  const email = adminEmailInput.value.trim();
   const password = adminPasswordInput.value.trim();
 
-  if (!useSupabase || !supabaseClient) {
-    setLoginError('ยังไม่ได้ตั้งค่า Supabase จึงไม่สามารถเข้าสู่ระบบเจ้าหน้าที่ได้');
-    return;
-  }
-
-  const submitButton = adminLoginForm.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-  submitButton.textContent = 'กำลังตรวจสอบ...';
-  loginErrorMsg.style.display = 'none';
-
-  try {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error || !data.session) throw error || new Error('Missing session');
-
-    const allowed = await userHasAdminRole(data.user.id);
-    if (!allowed) {
-      await supabaseClient.auth.signOut();
-      setLoginError('บัญชีนี้ไม่มีสิทธิ์เจ้าหน้าที่');
-      return;
-    }
-
-    currentAdminUser = data.user;
+  if (password === '36335') {
     isAdminLoggedIn = true;
-    await fetchTicketsFromSupabase();
+    try {
+      sessionStorage.setItem('is_admin_logged_in', 'true');
+    } catch (e) {
+      console.warn("Could not save session state:", e);
+    }
     closeModal('admin-login-modal');
     setRoleMode('admin-manage');
-  } catch (error) {
-    console.error('Admin login failed:', error);
-    setLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = 'ยืนยันเข้าสู่ระบบ';
+  } else {
+    setLoginError('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
   }
 });
 
@@ -1570,24 +1498,9 @@ editTicketForm.addEventListener('submit', async function(e) {
 // 11. Initial On-Load Trigger
 // ----------------------------------------------------
 async function initApp() {
-  if (!useSupabase || !supabaseClient) {
-    updateStatistics();
-    setRoleMode('user');
-    return;
-  }
-
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error) console.error('Could not restore Supabase session:', error);
-  await applyAuthenticatedSession(data?.session || null);
-
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_OUT') {
-      currentAdminUser = null;
-      isAdminLoggedIn = false;
-      tickets = loadLocalTickets();
-      setRoleMode('user');
-    }
-  });
+  if (useSupabase && supabaseClient) await fetchTicketsFromSupabase();
+  updateStatistics();
+  setRoleMode(isAdminLoggedIn ? 'admin-manage' : 'user');
 }
 
 // Boot

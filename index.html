@@ -567,17 +567,13 @@
       </div>
       <form id="admin-login-form">
         <div class="modal-body">
-          <p class="info-note">เข้าสู่ระบบด้วยบัญชีเจ้าหน้าที่ที่ลงทะเบียนใน Supabase Auth</p>
-          <div class="form-group">
-            <label for="admin-email" class="required">อีเมลเจ้าหน้าที่</label>
-            <input type="email" id="admin-email" placeholder="name@organization.com" autocomplete="username" required>
-          </div>
+          <p class="info-note">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งานในฐานะเจ้าหน้าที่ IT / แอดมิน</p>
           <div class="form-group">
             <label for="admin-password" class="required">รหัสผ่านแอดมิน</label>
-            <input type="password" id="admin-password" placeholder="ระบุรหัสผ่านแอดมิน" autocomplete="current-password" required>
+            <input type="password" id="admin-password" placeholder="ระบุรหัสผ่านแอดมิน" autocomplete="current-password" inputmode="numeric" required>
           </div>
           <div id="login-error-msg" style="color: #ef4444; font-size: 0.82rem; margin-top: 0.5rem; display: none;">
-            <i class="fa-solid fa-triangle-exclamation"></i> <span id="login-error-text">ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลอีกครั้ง</span>
+            <i class="fa-solid fa-triangle-exclamation"></i> <span id="login-error-text">รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -603,7 +599,7 @@
   <footer class="app-footer">
     <div class="footer-container">
       <p>&copy; 2026 IT Service Department. พัฒนาขึ้นสำหรับระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์ภายในองค์กร (ต้นแบบ Static Web)</p>
-      <p class="footer-note">ข้อมูลใบงานจัดเก็บใน Supabase ส่วนข้อมูลชั่วคราวของผู้แจ้งจะอยู่ในเบราว์เซอร์นี้</p>
+      <p class="footer-note">ข้อมูลจัดเก็บผ่าน Supabase และมี LocalStorage เป็นข้อมูลสำรองในเบราว์เซอร์</p>
     </div>
   </footer>
 
