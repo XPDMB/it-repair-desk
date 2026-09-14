@@ -55,10 +55,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js CDN for interactive graphs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase JS Client Library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Custom CSS -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -670,7 +666,9 @@
     </div>
   </footer>
 
-  <!-- Custom JS -->
-  <script src="script.js"></script>
+  <!-- Supabase loads after the HTML has been parsed. Chart.js is loaded only
+       when an admin opens the analytics dashboard. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="script.js"></script>
 </body>
 </html>

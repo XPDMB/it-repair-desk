@@ -761,6 +761,23 @@ body {
   border: 1px solid var(--border-color);
 }
 
+.lazy-photo-trigger i {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid #c7d2fe;
+  border-radius: 4px;
+  background: var(--primary-lightest);
+  color: var(--primary);
+  font-size: 0.8rem;
+}
+
+.img-preview-trigger:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .img-preview-trigger span {
   font-size: 0.75rem;
   font-weight: 600;

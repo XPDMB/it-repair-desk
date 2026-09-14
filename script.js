@@ -153,7 +153,8 @@ async function fetchTicketsFromSupabase() {
   try {
     const { data, error } = await supabaseClient
       .from('tickets')
-      .select('*')
+      // Keep the initial response small. Photos are fetched only when requested.
+      .select('id,reporter,dept,phone,device_type,model,subject,detail,status,priority,date,assignee,repair_result')
       .order('date', { ascending: false });
 
     if (error) throw error;
@@ -171,10 +172,12 @@ async function fetchTicketsFromSupabase() {
         status: item.status,
         priority: item.priority,
         date: item.date,
-        photo: item.photo,
+        photo: null,
+        photoLoaded: false,
         assignee: item.assignee,
         repairResult: item.repair_result,
-        afterPhoto: item.after_photo
+        afterPhoto: null,
+        afterPhotoLoaded: item.status !== 'completed'
       }));
       console.log("Loaded tickets from Supabase:", tickets.length);
     }
@@ -183,7 +186,7 @@ async function fetchTicketsFromSupabase() {
   }
 }
 
-let tickets = defaultTickets;
+let tickets = useSupabase ? [] : defaultTickets;
 try {
   const storedTickets = localStorage.getItem('it_tickets');
   if (storedTickets) tickets = JSON.parse(storedTickets);
@@ -213,6 +216,23 @@ const techniciansList = [
 let chartStatusInstance = null;
 let chartDeviceInstance = null;
 let chartDeptInstance = null;
+let chartJsLoadingPromise = null;
+
+function ensureChartJsLoaded() {
+  if (typeof Chart !== 'undefined') return Promise.resolve();
+  if (chartJsLoadingPromise) return chartJsLoadingPromise;
+
+  chartJsLoadingPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('ไม่สามารถโหลด Chart.js ได้'));
+    document.head.appendChild(script);
+  });
+
+  return chartJsLoadingPromise;
+}
 
 // Temporary variables for image uploads
 let tempUploadPhoto = '';
@@ -223,6 +243,8 @@ let tempUploadFile = null;
 let tempUploadAfterFile = null;
 let tempEditFile = null;
 let tempEditAfterFile = null;
+let editPhotoChanged = false;
+let editAfterPhotoChanged = false;
 
 // ----------------------------------------------------
 // 2. Select DOM Elements
@@ -340,6 +362,59 @@ function safeImageUrl(value) {
     return url;
   }
   return '';
+}
+
+function getPhotoSlotConfig(slot) {
+  return slot === 'after'
+    ? { property: 'afterPhoto', loadedFlag: 'afterPhotoLoaded', column: 'after_photo', title: 'รูปหลังซ่อม' }
+    : { property: 'photo', loadedFlag: 'photoLoaded', column: 'photo', title: 'รูปหลักฐาน' };
+}
+
+async function loadTicketPhoto(ticket, slot) {
+  const config = getPhotoSlotConfig(slot);
+  const cachedUrl = safeImageUrl(ticket[config.property]);
+  if (cachedUrl || ticket[config.loadedFlag] === true) return cachedUrl;
+
+  if (!useSupabase || !supabaseClient) {
+    ticket[config.loadedFlag] = true;
+    return '';
+  }
+
+  const { data, error } = await supabaseClient
+    .from('tickets')
+    .select(config.column)
+    .eq('id', ticket.id)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  ticket[config.property] = data?.[config.column] || '';
+  ticket[config.loadedFlag] = true;
+  return safeImageUrl(ticket[config.property]);
+}
+
+async function showTicketPhoto(ticket, slot, button) {
+  const config = getPhotoSlotConfig(slot);
+  const label = button?.querySelector('.photo-action-label');
+  const originalLabel = label?.textContent || 'ดูรูป';
+
+  if (button) button.disabled = true;
+  if (label) label.textContent = 'กำลังโหลด...';
+
+  try {
+    const imageUrl = await loadTicketPhoto(ticket, slot);
+    if (!imageUrl) {
+      alert(`รายการนี้ไม่มี${config.title}`);
+      return;
+    }
+    showLightbox(imageUrl, `${config.title}: ${ticket.id}`);
+  } catch (error) {
+    console.error('Failed to load ticket photo:', error);
+    alert('โหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+  } finally {
+    if (button) button.disabled = false;
+    if (label) label.textContent = originalLabel;
+  }
 }
 
 function setLoginError(message) {
@@ -482,21 +557,21 @@ function renderTickets() {
       
       // Photo previews logic
       let beforePhotoHTML = `<span class="no-image-placeholder">ไม่มีรูป</span>`;
-      if (beforePhotoUrl) {
+      if (beforePhotoUrl || t.photoLoaded !== true) {
         beforePhotoHTML = `
-          <button type="button" class="img-preview-trigger" data-image-slot="before">
-            <img alt="ก่อนซ่อม">
-            <span>ดูรูป</span>
+          <button type="button" class="img-preview-trigger lazy-photo-trigger" data-image-slot="before">
+            <i class="fa-regular fa-image" aria-hidden="true"></i>
+            <span class="photo-action-label">ดูรูป</span>
           </button>
         `;
       }
       
       let afterPhotoHTML = `<span class="no-image-placeholder">ไม่มีรูป</span>`;
-      if (afterPhotoUrl) {
+      if (afterPhotoUrl || t.afterPhotoLoaded !== true) {
         afterPhotoHTML = `
-          <button type="button" class="img-preview-trigger" data-image-slot="after">
-            <img alt="หลังซ่อม">
-            <span>ดูรูป</span>
+          <button type="button" class="img-preview-trigger lazy-photo-trigger" data-image-slot="after">
+            <i class="fa-regular fa-image" aria-hidden="true"></i>
+            <span class="photo-action-label">ดูรูป</span>
           </button>
         `;
       }
@@ -602,14 +677,12 @@ function renderTickets() {
 
       const beforeImageButton = card.querySelector('[data-image-slot="before"]');
       if (beforeImageButton) {
-        beforeImageButton.querySelector('img').src = beforePhotoUrl;
-        beforeImageButton.addEventListener('click', () => showLightbox(beforePhotoUrl, `รูปหลักฐาน: ${t.id}`));
+        beforeImageButton.addEventListener('click', () => showTicketPhoto(t, 'before', beforeImageButton));
       }
 
       const afterImageButton = card.querySelector('[data-image-slot="after"]');
       if (afterImageButton) {
-        afterImageButton.querySelector('img').src = afterPhotoUrl;
-        afterImageButton.addEventListener('click', () => showLightbox(afterPhotoUrl, `รูปหลังซ่อม: ${t.id}`));
+        afterImageButton.addEventListener('click', () => showTicketPhoto(t, 'after', afterImageButton));
       }
 
       card.querySelectorAll('[data-admin-action="true"]').forEach(button => {
@@ -730,6 +803,13 @@ function renderYearlySummary(reportTickets) {
       <th>${completionRate}%</th>
     </tr>
   `;
+}
+
+function refreshAdminDashboard() {
+  renderYearlySummary(getTicketsForSelectedYear());
+  ensureChartJsLoaded()
+    .then(renderDashboardCharts)
+    .catch(error => console.error('Chart.js load failed:', error));
 }
 
 function renderDashboardCharts() {
@@ -930,7 +1010,7 @@ function saveStateAndRender() {
   // Re-draw graphs if the Admin Dashboard panel is currently active/visible
   if (!adminOverviewPanel.classList.contains('hidden')) {
     populateReportYearOptions();
-    renderDashboardCharts();
+    refreshAdminDashboard();
   }
 }
 
@@ -993,7 +1073,7 @@ function setRoleMode(mode) {
     
     // Draw / refresh the Chart.js visualisations
     populateReportYearOptions();
-    setTimeout(renderDashboardCharts, 50); // slight timeout to allow panel display transitions
+    setTimeout(refreshAdminDashboard, 50); // slight timeout to allow panel display transitions
   }
   
   // Re-render matching current permissions view
@@ -1016,6 +1096,7 @@ function adminUpdateStatus(ticketId, nextStatus) {
     tickets[index].assignee = '';
     tickets[index].repairResult = '';
     tickets[index].afterPhoto = '';
+    tickets[index].afterPhotoLoaded = true;
     updateFields = { status: 'pending', assignee: '', repair_result: '', after_photo: '' };
     saveStateAndRender();
     updateSupabaseStatus(ticketId, updateFields);
@@ -1056,8 +1137,8 @@ function adminOpenCompleteModal(ticketId) {
   openModal(completeJobModal);
 }
 
-// Admin opens edit modal
-function openEditModal(ticketId) {
+// Admin opens edit modal. Existing photos are loaded only for this ticket.
+async function openEditModal(ticketId) {
   if (!requireAdmin()) return;
   const ticket = tickets.find(t => t.id === ticketId);
   if (!ticket) return;
@@ -1097,24 +1178,47 @@ function openEditModal(ticketId) {
     editResultInput.style.backgroundColor = 'white';
     editResultInput.style.cursor = 'text';
   }
-  // Initialize edit photos preview states
-  tempEditPhoto = ticket.photo || '';
-  if (tempEditPhoto) {
-    editPhotoPreview.src = tempEditPhoto;
-    editPhotoPreviewContainer.classList.remove('hidden');
-  } else {
-    editPhotoPreviewContainer.classList.add('hidden');
-  }
-
-  tempEditAfterPhoto = ticket.afterPhoto || '';
-  if (tempEditAfterPhoto) {
-    editAfterPreview.src = tempEditAfterPhoto;
-    editAfterPreviewContainer.classList.remove('hidden');
-  } else {
-    editAfterPreviewContainer.classList.add('hidden');
-  }
-
+  const submitBtn = editTicketForm.querySelector('button[type="submit"]');
+  const originalSubmitText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลรูป...';
+  submitBtn.disabled = true;
+  tempEditPhoto = '';
+  tempEditAfterPhoto = '';
+  tempEditFile = null;
+  tempEditAfterFile = null;
+  editPhotoChanged = false;
+  editAfterPhotoChanged = false;
+  editPhotoPreviewContainer.classList.add('hidden');
+  editAfterPreviewContainer.classList.add('hidden');
   openModal(editTicketModal);
+
+  try {
+    const [beforePhoto, afterPhoto] = await Promise.all([
+      loadTicketPhoto(ticket, 'before'),
+      loadTicketPhoto(ticket, 'after')
+    ]);
+
+    // Ignore a late response if another ticket was opened in the meantime.
+    if (document.getElementById('edit-ticket-id').value !== ticket.id) return;
+
+    tempEditPhoto = beforePhoto;
+    tempEditAfterPhoto = afterPhoto;
+    if (beforePhoto) {
+      editPhotoPreview.src = beforePhoto;
+      editPhotoPreviewContainer.classList.remove('hidden');
+    }
+    if (afterPhoto) {
+      editAfterPreview.src = afterPhoto;
+      editAfterPreviewContainer.classList.remove('hidden');
+    }
+
+    submitBtn.innerHTML = originalSubmitText;
+    submitBtn.disabled = false;
+  } catch (error) {
+    console.error('Failed to load photos for editing:', error);
+    submitBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> โหลดรูปไม่สำเร็จ';
+    alert('ไม่สามารถโหลดข้อมูลรูปเดิมได้ กรุณาปิดหน้าต่างแล้วลองใหม่อีกครั้ง');
+  }
 }
 
 // Admin deletes a ticket
@@ -1148,7 +1252,7 @@ tabUserBtn.addEventListener('click', () => setRoleMode('user'));
 tabAdminBtn.addEventListener('click', () => setRoleMode('admin-manage'));
 tabDashboardBtn.addEventListener('click', () => setRoleMode('admin-dashboard'));
 
-reportYearSelect.addEventListener('change', renderDashboardCharts);
+reportYearSelect.addEventListener('change', refreshAdminDashboard);
 
 printReportBtn.addEventListener('click', () => {
   if (!requireAdmin()) return;
@@ -1214,17 +1318,42 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
   });
 });
 
-// Helper to upload image to Supabase Storage
+async function optimizeImageForUpload(file) {
+  if (!file || typeof createImageBitmap !== 'function') return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.8));
+    if (!blob || blob.size >= file.size) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'ticket-photo';
+    return new File([blob], `${baseName}.webp`, { type: 'image/webp' });
+  } catch (error) {
+    console.warn('Image optimization skipped:', error);
+    return file;
+  }
+}
+
+// Helper to optimize and upload image to Supabase Storage
 async function uploadImageToSupabase(file) {
   if (!useSupabase || !supabaseClient || !file) return null;
   try {
-    const fileExt = file.name.split('.').pop();
+    const optimizedFile = await optimizeImageForUpload(file);
+    const fileExt = optimizedFile.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { data, error } = await supabaseClient.storage
       .from('ticket-images')
-      .upload(filePath, file);
+      .upload(filePath, optimizedFile, { contentType: optimizedFile.type });
 
     if (error) throw error;
 
@@ -1303,11 +1432,11 @@ handleImageFileSelect(repairPhotoInput, photoPreviewContainer, photoPreview,
 handleImageFileSelect(afterPhotoInput, afterPreviewContainer, afterPreview, 
   (data) => tempUploadAfterPhoto = data, 
   (file) => tempUploadAfterFile = file);
-handleImageFileSelect(editPhotoInput, editPhotoPreviewContainer, editPhotoPreview, 
-  (data) => tempEditPhoto = data, 
+handleImageFileSelect(editPhotoInput, editPhotoPreviewContainer, editPhotoPreview,
+  (data) => { tempEditPhoto = data; editPhotoChanged = true; },
   (file) => tempEditFile = file);
-handleImageFileSelect(editAfterPhotoInput, editAfterPreviewContainer, editAfterPreview, 
-  (data) => tempEditAfterPhoto = data, 
+handleImageFileSelect(editAfterPhotoInput, editAfterPreviewContainer, editAfterPreview,
+  (data) => { tempEditAfterPhoto = data; editAfterPhotoChanged = true; },
   (file) => tempEditAfterFile = file);
 
 // Remove preview buttons
@@ -1330,6 +1459,7 @@ removeAfterPhotoBtn.addEventListener('click', () => {
 removeEditPhotoBtn.addEventListener('click', () => {
   tempEditPhoto = '';
   tempEditFile = null;
+  editPhotoChanged = true;
   editPhotoInput.value = '';
   editPhotoPreviewContainer.classList.add('hidden');
   editPhotoPreview.src = '';
@@ -1338,6 +1468,7 @@ removeEditPhotoBtn.addEventListener('click', () => {
 removeEditAfterPhotoBtn.addEventListener('click', () => {
   tempEditAfterPhoto = '';
   tempEditAfterFile = null;
+  editAfterPhotoChanged = true;
   editAfterPhotoInput.value = '';
   editAfterPreviewContainer.classList.add('hidden');
   editAfterPreview.src = '';
@@ -1391,8 +1522,8 @@ newTicketForm.addEventListener('submit', async function(e) {
   }
   const idStr = `${prefix}${String(nextNum).padStart(3, '0')}`;
   
-  // Setup photo or generate dynamic placeholder if empty
-  let photoData = tempUploadPhoto;
+  // Keep Base64 only for offline/local mode. Supabase stores a compact file URL.
+  let photoData = '';
   
   if (tempUploadFile && useSupabase && supabaseClient) {
     const submitBtn = newTicketForm.querySelector('button[type="submit"]');
@@ -1401,16 +1532,18 @@ newTicketForm.addEventListener('submit', async function(e) {
     submitBtn.disabled = true;
 
     const uploadedUrl = await uploadImageToSupabase(tempUploadFile);
-    if (uploadedUrl) {
-       photoData = uploadedUrl;
+    if (!uploadedUrl) {
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+      alert('อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      return;
     }
+    photoData = uploadedUrl;
 
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
-  }
-  
-  if (!photoData) {
-    photoData = generatePlaceholderImage('แจ้งซ่อม: ' + model, '#fee2e2', '#ef4444');
+  } else if (tempUploadFile) {
+    photoData = tempUploadPhoto;
   }
 
   const newTicket = {
@@ -1426,9 +1559,11 @@ newTicketForm.addEventListener('submit', async function(e) {
     priority: priority,
     date: new Date().toISOString(),
     photo: photoData,
+    photoLoaded: true,
     assignee: '',
     repairResult: '',
-    afterPhoto: ''
+    afterPhoto: '',
+    afterPhotoLoaded: true
   };
 
   if (useSupabase && supabaseClient) {
@@ -1477,6 +1612,7 @@ assignJobForm.addEventListener('submit', function(e) {
   tickets[index].assignee = assignee;
   tickets[index].repairResult = '';
   tickets[index].afterPhoto = '';
+  tickets[index].afterPhotoLoaded = true;
   
   const updateFields = { status: 'processing', assignee: assignee, repair_result: '', after_photo: '' };
   
@@ -1497,16 +1633,7 @@ completeJobForm.addEventListener('submit', async function(e) {
   const index = tickets.findIndex(t => t.id === ticketId);
   if (index === -1) return;
 
-  tickets[index].status = 'completed';
-  tickets[index].assignee = assignee || 'ช่างไอที';
-  tickets[index].repairResult = repairResult;
-  
-  if (tempUploadAfterPhoto) {
-    tickets[index].afterPhoto = tempUploadAfterPhoto;
-  } else {
-    // Generate dynamic placeholder for fixed image
-    tickets[index].afterPhoto = generatePlaceholderImage('แก้ไขเสร็จสิ้น: ' + tickets[index].model, '#d1fae5', '#10b981');
-  }
+  let afterPhotoData = '';
 
   // Handle actual file upload if present
   if (tempUploadAfterFile && useSupabase && supabaseClient) {
@@ -1516,13 +1643,25 @@ completeJobForm.addEventListener('submit', async function(e) {
     submitBtn.disabled = true;
     
     const uploadedUrl = await uploadImageToSupabase(tempUploadAfterFile);
-    if (uploadedUrl) {
-      tickets[index].afterPhoto = uploadedUrl;
+    if (!uploadedUrl) {
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+      alert('อัปโหลดรูปหลังซ่อมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      return;
     }
+    afterPhotoData = uploadedUrl;
     
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
+  } else if (tempUploadAfterFile) {
+    afterPhotoData = tempUploadAfterPhoto;
   }
+
+  tickets[index].status = 'completed';
+  tickets[index].assignee = assignee || 'ช่างไอที';
+  tickets[index].repairResult = repairResult;
+  tickets[index].afterPhoto = afterPhotoData;
+  tickets[index].afterPhotoLoaded = true;
 
   saveStateAndRender();
   closeModal('complete-job-modal');
@@ -1548,6 +1687,8 @@ editTicketForm.addEventListener('submit', async function(e) {
   const ticketId = document.getElementById('edit-ticket-id').value;
   const index = tickets.findIndex(t => t.id === ticketId);
   if (index === -1) return;
+  const originalPhoto = tickets[index].photo;
+  const originalAfterPhoto = tickets[index].afterPhoto;
 
   tickets[index].reporter = document.getElementById('edit-reporter').value.trim();
   tickets[index].dept = document.getElementById('edit-dept').value.trim();
@@ -1568,14 +1709,13 @@ editTicketForm.addEventListener('submit', async function(e) {
     if (!tickets[index].repairResult) {
       tickets[index].repairResult = 'แอดมินปิดงานซ่อมแซม';
     }
-    if (!tempEditAfterPhoto && !tickets[index].afterPhoto) {
-      tickets[index].afterPhoto = generatePlaceholderImage('แก้ไขเสร็จสิ้น: ' + tickets[index].model, '#d1fae5', '#10b981');
-    }
   }
 
   // Assign image updates
   tickets[index].photo = tempEditPhoto;
   tickets[index].afterPhoto = tempEditAfterPhoto;
+  tickets[index].photoLoaded = true;
+  tickets[index].afterPhotoLoaded = true;
 
   if (useSupabase && supabaseClient) {
     const submitBtn = editTicketForm.querySelector('button[type="submit"]');
@@ -1588,11 +1728,27 @@ editTicketForm.addEventListener('submit', async function(e) {
     
     if (tempEditFile) {
       const uploadedUrl = await uploadImageToSupabase(tempEditFile);
-      if (uploadedUrl) tickets[index].photo = uploadedUrl;
+      if (!uploadedUrl) {
+        tickets[index].photo = originalPhoto;
+        tickets[index].afterPhoto = originalAfterPhoto;
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        alert('อัปโหลดรูปหลักฐานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+      tickets[index].photo = uploadedUrl;
     }
     if (tempEditAfterFile) {
       const uploadedUrl = await uploadImageToSupabase(tempEditAfterFile);
-      if (uploadedUrl) tickets[index].afterPhoto = uploadedUrl;
+      if (!uploadedUrl) {
+        tickets[index].photo = originalPhoto;
+        tickets[index].afterPhoto = originalAfterPhoto;
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        alert('อัปโหลดรูปหลังซ่อมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+      tickets[index].afterPhoto = uploadedUrl;
     }
     
     if (tempEditFile || tempEditAfterFile) {
@@ -1606,7 +1762,7 @@ editTicketForm.addEventListener('submit', async function(e) {
 
   if (useSupabase && supabaseClient) {
     const t = tickets[index];
-    supabaseClient.from('tickets').update({
+    const updatePayload = {
       reporter: t.reporter,
       dept: t.dept,
       device_type: t.deviceType,
@@ -1616,10 +1772,12 @@ editTicketForm.addEventListener('submit', async function(e) {
       subject: t.subject,
       detail: t.detail,
       assignee: t.assignee,
-      repair_result: t.repairResult,
-      photo: t.photo,
-      after_photo: t.afterPhoto
-    }).eq('id', t.id).then(({ error }) => {
+      repair_result: t.repairResult
+    };
+    if (editPhotoChanged) updatePayload.photo = t.photo;
+    if (editAfterPhotoChanged) updatePayload.after_photo = t.afterPhoto;
+
+    supabaseClient.from('tickets').update(updatePayload).eq('id', t.id).then(({ error }) => {
       if (error) console.error("Supabase update failed:", error);
     });
   }
@@ -1629,9 +1787,14 @@ editTicketForm.addEventListener('submit', async function(e) {
 // 11. Initial On-Load Trigger
 // ----------------------------------------------------
 async function initApp() {
-  if (useSupabase && supabaseClient) await fetchTicketsFromSupabase();
+  // Paint cached text data immediately, then refresh from Supabase in the background.
   updateStatistics();
   setRoleMode(isAdminLoggedIn ? 'admin-manage' : 'user');
+
+  if (useSupabase && supabaseClient) {
+    await fetchTicketsFromSupabase();
+    saveStateAndRender();
+  }
 }
 
 // Boot
