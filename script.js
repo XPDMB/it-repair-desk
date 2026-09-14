@@ -243,6 +243,17 @@ const adminPasswordInput = document.getElementById('admin-password');
 const loginErrorMsg = document.getElementById('login-error-msg');
 const loginErrorText = document.getElementById('login-error-text');
 const techListGrid = document.getElementById('tech-list-grid');
+const reportYearSelect = document.getElementById('report-year');
+const printReportBtn = document.getElementById('print-report-btn');
+const reportPeriodLabel = document.getElementById('report-period-label');
+const reportGeneratedAt = document.getElementById('report-generated-at');
+const yearlyReportTableBody = document.getElementById('yearly-report-table-body');
+const yearlyReportTableFoot = document.getElementById('yearly-report-table-foot');
+const yearlyTotalCount = document.getElementById('yearly-total-count');
+const yearlyCompletedCount = document.getElementById('yearly-completed-count');
+const yearlyCompletionRate = document.getElementById('yearly-completion-rate');
+const yearlyOpenCount = document.getElementById('yearly-open-count');
+const yearlyUrgentCount = document.getElementById('yearly-urgent-count');
 
 // Statistics UI Elements
 const statPendingCount = document.getElementById('stat-pending-count');
@@ -616,16 +627,124 @@ function renderTickets() {
 // ----------------------------------------------------
 // 5. Controller: Dashboard Charts Renderer (Chart.js)
 // ----------------------------------------------------
+const thaiMonthNames = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+function getValidTicketDate(ticket) {
+  const date = new Date(ticket.date);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function populateReportYearOptions() {
+  if (!reportYearSelect) return;
+
+  const currentYear = new Date().getFullYear();
+  const years = new Set([currentYear]);
+  tickets.forEach(ticket => {
+    const date = getValidTicketDate(ticket);
+    if (date) years.add(date.getFullYear());
+  });
+
+  const sortedYears = [...years].sort((a, b) => b - a);
+  const previousValue = Number(reportYearSelect.value);
+  reportYearSelect.innerHTML = sortedYears
+    .map(year => `<option value="${year}">พ.ศ. ${year + 543} (ค.ศ. ${year})</option>`)
+    .join('');
+
+  if (sortedYears.includes(previousValue)) {
+    reportYearSelect.value = String(previousValue);
+  } else {
+    reportYearSelect.value = String(sortedYears[0]);
+  }
+}
+
+function getSelectedReportYear() {
+  const selectedYear = Number(reportYearSelect?.value);
+  return Number.isInteger(selectedYear) ? selectedYear : new Date().getFullYear();
+}
+
+function getTicketsForSelectedYear() {
+  const selectedYear = getSelectedReportYear();
+  return tickets.filter(ticket => {
+    const date = getValidTicketDate(ticket);
+    return date && date.getFullYear() === selectedYear;
+  });
+}
+
+function countReportStatuses(reportTickets) {
+  return {
+    pending: reportTickets.filter(ticket => ticket.status === 'pending').length,
+    processing: reportTickets.filter(ticket => ticket.status === 'processing').length,
+    completed: reportTickets.filter(ticket => ticket.status === 'completed').length,
+    urgent: reportTickets.filter(ticket => ticket.priority === 'เร่งด่วน').length
+  };
+}
+
+function renderYearlySummary(reportTickets) {
+  const selectedYear = getSelectedReportYear();
+  const yearBE = selectedYear + 543;
+  const totals = countReportStatuses(reportTickets);
+  const completionRate = reportTickets.length
+    ? Math.round((totals.completed / reportTickets.length) * 100)
+    : 0;
+
+  reportPeriodLabel.textContent = `รายงานผลการดำเนินงาน ประจำปี พ.ศ. ${yearBE} (ค.ศ. ${selectedYear})`;
+  reportGeneratedAt.textContent = `จัดทำเมื่อ ${new Intl.DateTimeFormat('th-TH', {
+    dateStyle: 'long',
+    timeStyle: 'short'
+  }).format(new Date())}`;
+  yearlyTotalCount.textContent = reportTickets.length;
+  yearlyCompletedCount.textContent = totals.completed;
+  yearlyCompletionRate.textContent = `คิดเป็น ${completionRate}%`;
+  yearlyOpenCount.textContent = totals.pending + totals.processing;
+  yearlyUrgentCount.textContent = totals.urgent;
+
+  const monthlyRows = thaiMonthNames.map((monthName, monthIndex) => {
+    const monthTickets = reportTickets.filter(ticket => getValidTicketDate(ticket)?.getMonth() === monthIndex);
+    const counts = countReportStatuses(monthTickets);
+    const rate = monthTickets.length ? Math.round((counts.completed / monthTickets.length) * 100) : 0;
+    return `
+      <tr>
+        <td>${monthName}</td>
+        <td>${monthTickets.length}</td>
+        <td>${counts.pending}</td>
+        <td>${counts.processing}</td>
+        <td>${counts.completed}</td>
+        <td>${counts.urgent}</td>
+        <td>${rate}%</td>
+      </tr>
+    `;
+  }).join('');
+
+  yearlyReportTableBody.innerHTML = monthlyRows;
+  yearlyReportTableFoot.innerHTML = `
+    <tr>
+      <th>รวมทั้งปี</th>
+      <th>${reportTickets.length}</th>
+      <th>${totals.pending}</th>
+      <th>${totals.processing}</th>
+      <th>${totals.completed}</th>
+      <th>${totals.urgent}</th>
+      <th>${completionRate}%</th>
+    </tr>
+  `;
+}
+
 function renderDashboardCharts() {
+  const reportTickets = getTicketsForSelectedYear();
+  renderYearlySummary(reportTickets);
+
   if (typeof Chart === 'undefined') {
     console.warn('Chart.js library is not available.');
     return;
   }
 
   // 1. Prepare Status Distribution Data
-  const pendingCount = tickets.filter(t => t.status === 'pending').length;
-  const processingCount = tickets.filter(t => t.status === 'processing').length;
-  const completedCount = tickets.filter(t => t.status === 'completed').length;
+  const pendingCount = reportTickets.filter(t => t.status === 'pending').length;
+  const processingCount = reportTickets.filter(t => t.status === 'processing').length;
+  const completedCount = reportTickets.filter(t => t.status === 'completed').length;
 
   const canvasStatus = document.getElementById('chart-status');
   if (canvasStatus) {
@@ -660,7 +779,7 @@ function renderDashboardCharts() {
 
   // 2. Prepare Device Type Counts
   const devices = ['PC', 'Notebook', 'All in One', 'Printer', 'Network', 'Other'];
-  const deviceCounts = devices.map(d => tickets.filter(t => t.deviceType === d).length);
+  const deviceCounts = devices.map(d => reportTickets.filter(t => t.deviceType === d).length);
 
   const canvasDevice = document.getElementById('chart-device');
   if (canvasDevice) {
@@ -705,7 +824,7 @@ function renderDashboardCharts() {
 
   // 3. Prepare Department Distribution
   const deptMap = {};
-  tickets.forEach(t => {
+  reportTickets.forEach(t => {
     const d = t.dept || 'ไม่ระบุ';
     deptMap[d] = (deptMap[d] || 0) + 1;
   });
@@ -755,19 +874,19 @@ function renderDashboardCharts() {
   }
 
   // Render Technicians list below charts
-  renderTechniciansList();
+  renderTechniciansList(reportTickets);
 }
 
 // Render dynamic workload stats for each technician
-function renderTechniciansList() {
+function renderTechniciansList(reportTickets = tickets) {
   if (!techListGrid) return;
   
   techListGrid.innerHTML = '';
   
   techniciansList.forEach(tech => {
     // Count stats from tickets array
-    const inProgressCount = tickets.filter(t => t.assignee === tech.name && t.status === 'processing').length;
-    const completedCount = tickets.filter(t => t.assignee === tech.name && t.status === 'completed').length;
+    const inProgressCount = reportTickets.filter(t => t.assignee === tech.name && t.status === 'processing').length;
+    const completedCount = reportTickets.filter(t => t.assignee === tech.name && t.status === 'completed').length;
     
     // Status text based on workload
     const isBusy = inProgressCount >= 3;
@@ -810,6 +929,7 @@ function saveStateAndRender() {
   
   // Re-draw graphs if the Admin Dashboard panel is currently active/visible
   if (!adminOverviewPanel.classList.contains('hidden')) {
+    populateReportYearOptions();
     renderDashboardCharts();
   }
 }
@@ -868,10 +988,11 @@ function setRoleMode(mode) {
     adminOverviewPanel.classList.remove('hidden');
     adminModeBanner.classList.remove('hidden');
     document.getElementById('admin-banner-text').innerHTML = `
-      <strong>ภาพรวมแอดมิน:</strong> ติดตามสถิติของระบบผ่านกราฟประเภทต่าง ๆ
+      <strong>ภาพรวมแอดมิน:</strong> เลือกปีเพื่อดูสรุปผล และกดพิมพ์รายงานประจำปีได้
     `;
     
     // Draw / refresh the Chart.js visualisations
+    populateReportYearOptions();
     setTimeout(renderDashboardCharts, 50); // slight timeout to allow panel display transitions
   }
   
@@ -1026,6 +1147,16 @@ function showLightbox(imgSrc, title) {
 tabUserBtn.addEventListener('click', () => setRoleMode('user'));
 tabAdminBtn.addEventListener('click', () => setRoleMode('admin-manage'));
 tabDashboardBtn.addEventListener('click', () => setRoleMode('admin-dashboard'));
+
+reportYearSelect.addEventListener('change', renderDashboardCharts);
+
+printReportBtn.addEventListener('click', () => {
+  if (!requireAdmin()) return;
+  renderDashboardCharts();
+  document.body.classList.add('printing-yearly-report');
+  window.print();
+  document.body.classList.remove('printing-yearly-report');
+});
 
 // Login & Logout switches
 tabLoginBtn.addEventListener('click', () => {

@@ -216,6 +216,44 @@
 
     <!-- SECTION 2: Admin Dashboard Panel (Visible only in Tab 3) -->
     <div id="admin-overview-panel" class="content-section hidden">
+      <section class="yearly-report-header">
+        <div>
+          <span class="report-eyebrow">รายงานประจำปี</span>
+          <h2>สรุปผลการให้บริการงานซ่อมอุปกรณ์ไอที</h2>
+          <p id="report-period-label">ข้อมูลสรุปประจำปี</p>
+        </div>
+        <div class="report-toolbar no-print">
+          <label for="report-year">เลือกปี</label>
+          <select id="report-year" aria-label="เลือกปีสำหรับรายงาน"></select>
+          <button id="print-report-btn" class="btn btn-primary" type="button">
+            <i class="fa-solid fa-print"></i> พิมพ์รายงาน
+          </button>
+        </div>
+      </section>
+
+      <section class="yearly-kpi-grid" aria-label="ตัวเลขสรุปรายปี">
+        <div class="yearly-kpi-card kpi-total">
+          <span>ใบงานทั้งหมด</span>
+          <strong id="yearly-total-count">0</strong>
+          <small>รายการ</small>
+        </div>
+        <div class="yearly-kpi-card kpi-completed">
+          <span>ซ่อมเสร็จแล้ว</span>
+          <strong id="yearly-completed-count">0</strong>
+          <small id="yearly-completion-rate">คิดเป็น 0%</small>
+        </div>
+        <div class="yearly-kpi-card kpi-open">
+          <span>งานที่ยังเปิดอยู่</span>
+          <strong id="yearly-open-count">0</strong>
+          <small>รอรับเรื่องและกำลังซ่อม</small>
+        </div>
+        <div class="yearly-kpi-card kpi-urgent">
+          <span>งานเร่งด่วน</span>
+          <strong id="yearly-urgent-count">0</strong>
+          <small>รายการตลอดปี</small>
+        </div>
+      </section>
+
       <!-- Dashboard Top: Chart Widgets Grid -->
       <section class="dashboard-charts-section">
         <div class="section-title-wrapper" style="margin-bottom: 1.25rem;">
@@ -255,6 +293,30 @@
         </div>
       </section>
 
+      <section class="yearly-table-section">
+        <div class="section-title-wrapper yearly-table-title">
+          <h2 class="section-title">สรุปผลแยกตามเดือน</h2>
+          <span id="report-generated-at" class="report-generated-at"></span>
+        </div>
+        <div class="yearly-table-wrap">
+          <table class="yearly-report-table">
+            <thead>
+              <tr>
+                <th>เดือน</th>
+                <th>ทั้งหมด</th>
+                <th>รอรับเรื่อง</th>
+                <th>กำลังซ่อม</th>
+                <th>เสร็จแล้ว</th>
+                <th>เร่งด่วน</th>
+                <th>อัตราปิดงาน</th>
+              </tr>
+            </thead>
+            <tbody id="yearly-report-table-body"></tbody>
+            <tfoot id="yearly-report-table-foot"></tfoot>
+          </table>
+        </div>
+      </section>
+
       <!-- Dashboard Bottom: Technicians List Section -->
       <section class="technicians-section" style="margin-top: 2rem;">
         <div class="section-title-wrapper" style="margin-bottom: 1.25rem;">
@@ -263,6 +325,11 @@
         <div id="tech-list-grid" class="tech-grid">
           <!-- Rendered dynamically by script.js -->
         </div>
+      </section>
+
+      <section class="report-signatures print-only">
+        <div>ลงชื่อ ................................................ ผู้จัดทำรายงาน</div>
+        <div>ลงชื่อ ................................................ ผู้ตรวจสอบ</div>
       </section>
     </div>
 
