@@ -24,7 +24,7 @@
         errorDiv.style.whiteSpace = 'pre-wrap';
         document.body.appendChild(errorDiv);
       }
-      errorDiv.innerHTML = '<strong>JavaScript Error:</strong> ' + e.message + ' at ' + e.filename + ':' + e.lineno + ':' + e.colno + '\n' + (e.error ? e.error.stack : '');
+      errorDiv.textContent = 'JavaScript Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno + ':' + e.colno + '\n' + (e.error ? e.error.stack : '');
     });
     window.addEventListener('unhandledrejection', function(e) {
       var errorDiv = document.getElementById('js-error-overlay');
@@ -45,7 +45,7 @@
         errorDiv.style.whiteSpace = 'pre-wrap';
         document.body.appendChild(errorDiv);
       }
-      errorDiv.innerHTML = '<strong>Unhandled Promise Rejection:</strong> ' + e.reason;
+      errorDiv.textContent = 'Unhandled Promise Rejection: ' + e.reason;
     });
   </script>
   <title>IT Repair Desk - ระบบแจ้งซ่อมคอมพิวเตอร์และอุปกรณ์ไอที</title>
@@ -330,7 +330,7 @@
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <span>อัปโหลดรูปภาพหลักฐาน (คลิกเพื่อเลือกไฟล์)</span>
               </label>
-              <input type="file" id="repair-photo" accept="image/*" class="file-input">
+              <input type="file" id="repair-photo" accept="image/jpeg,image/png,image/webp" class="file-input">
               <div id="photo-preview-container" class="preview-container hidden">
                 <img id="photo-preview" src="" alt="ภาพตัวอย่าง">
                 <button type="button" id="remove-photo-btn" class="btn-remove-photo">&times;</button>
@@ -406,7 +406,7 @@
                 <i class="fa-solid fa-camera"></i>
                 <span>อัปโหลดรูปภาพหลังการแก้ไข</span>
               </label>
-              <input type="file" id="after-photo" accept="image/*" class="file-input">
+              <input type="file" id="after-photo" accept="image/jpeg,image/png,image/webp" class="file-input">
               <div id="after-preview-container" class="preview-container hidden">
                 <img id="after-preview" src="" alt="ภาพหลังแก้ไข">
                 <button type="button" id="remove-after-photo-btn" class="btn-remove-photo">&times;</button>
@@ -523,7 +523,7 @@
             <div class="form-group">
               <label>รูปหลักฐานการแจ้งซ่อม</label>
               <div class="image-upload-wrapper">
-                <input type="file" id="edit-photo-input" accept="image/*" class="file-input">
+                <input type="file" id="edit-photo-input" accept="image/jpeg,image/png,image/webp" class="file-input">
                 <label for="edit-photo-input" class="upload-label" style="padding: 1rem 0.5rem; font-size: 0.8rem;">
                   <i class="fa-solid fa-file-image"></i> เปลี่ยนรูปภาพหลักฐาน
                 </label>
@@ -537,7 +537,7 @@
             <div class="form-group">
               <label>รูปถ่ายหลังการซ่อมเสร็จสิ้น</label>
               <div class="image-upload-wrapper">
-                <input type="file" id="edit-after-photo-input" accept="image/*" class="file-input">
+                <input type="file" id="edit-after-photo-input" accept="image/jpeg,image/png,image/webp" class="file-input">
                 <label for="edit-after-photo-input" class="upload-label" style="padding: 1rem 0.5rem; font-size: 0.8rem;">
                   <i class="fa-solid fa-circle-check"></i> เปลี่ยนรูปหลังแก้ไข
                 </label>
@@ -567,13 +567,17 @@
       </div>
       <form id="admin-login-form">
         <div class="modal-body">
-          <p class="info-note">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งานในฐานะเจ้าหน้าที่ IT / แอดมิน</p>
+          <p class="info-note">เข้าสู่ระบบด้วยบัญชีเจ้าหน้าที่ที่ลงทะเบียนใน Supabase Auth</p>
+          <div class="form-group">
+            <label for="admin-email" class="required">อีเมลเจ้าหน้าที่</label>
+            <input type="email" id="admin-email" placeholder="name@organization.com" autocomplete="username" required>
+          </div>
           <div class="form-group">
             <label for="admin-password" class="required">รหัสผ่านแอดมิน</label>
-            <input type="password" id="admin-password" placeholder="ระบุรหัสผ่านแอดมิน" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit; font-size: 0.9rem; outline: none;">
+            <input type="password" id="admin-password" placeholder="ระบุรหัสผ่านแอดมิน" autocomplete="current-password" required>
           </div>
           <div id="login-error-msg" style="color: #ef4444; font-size: 0.82rem; margin-top: 0.5rem; display: none;">
-            <i class="fa-solid fa-triangle-exclamation"></i> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+            <i class="fa-solid fa-triangle-exclamation"></i> <span id="login-error-text">ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลอีกครั้ง</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -599,7 +603,7 @@
   <footer class="app-footer">
     <div class="footer-container">
       <p>&copy; 2026 IT Service Department. พัฒนาขึ้นสำหรับระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์ภายในองค์กร (ต้นแบบ Static Web)</p>
-      <p class="footer-note">ข้อมูลทั้งหมดจะถูกบันทึกไว้ในเบราว์เซอร์นี้ (LocalStorage) เท่านั้น</p>
+      <p class="footer-note">ข้อมูลใบงานจัดเก็บใน Supabase ส่วนข้อมูลชั่วคราวของผู้แจ้งจะอยู่ในเบราว์เซอร์นี้</p>
     </div>
   </footer>
 

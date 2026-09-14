@@ -128,7 +128,8 @@ const defaultTickets = [
   }
 ];
 
-// Supabase Configuration - ใส่รหัสผ่านและ URL ของคุณที่นี่เพื่อเชื่อมต่อฐานข้อมูล Supabase
+// Supabase public configuration. The publishable key is safe in the browser only
+// when Row Level Security policies are enabled (see supabase-security.sql).
 const SUPABASE_URL = 'https://zkkhqenmkrkxhippxger.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_0d7umoa1boSzAmPjByVbZg_WWu6Qs32';
 
@@ -149,7 +150,7 @@ if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY &&
 
 // Function to fetch tickets from Supabase DB
 async function fetchTicketsFromSupabase() {
-  if (!useSupabase || !supabaseClient) return;
+  if (!useSupabase || !supabaseClient || !isAdminLoggedIn) return;
   try {
     const { data, error } = await supabaseClient
       .from('tickets')
@@ -183,26 +184,35 @@ async function fetchTicketsFromSupabase() {
   }
 }
 
-// Initialize local variables
-let tickets = defaultTickets;
-try {
-  const storedTickets = localStorage.getItem('it_tickets');
-  if (storedTickets) {
-    tickets = JSON.parse(storedTickets);
+const USER_TICKETS_STORAGE_KEY = 'it_user_tickets_v2';
+
+function loadLocalTickets() {
+  if (useSupabase) {
+    try {
+      const storedTickets = localStorage.getItem(USER_TICKETS_STORAGE_KEY);
+      return storedTickets ? JSON.parse(storedTickets) : [];
+    } catch (e) {
+      console.warn("Storage access denied: falling back to memory storage.", e);
+      return [];
+    }
   }
+  return defaultTickets.map(ticket => ({ ...ticket }));
+}
+
+// Public users only see tickets created in their own browser. Admins load the
+// shared list after Supabase confirms their authenticated role.
+let tickets = loadLocalTickets();
+try {
+  localStorage.removeItem('it_tickets');
 } catch (e) {
-  console.warn("Storage access denied: falling back to memory storage.", e);
+  console.warn("Could not remove legacy local data.", e);
 }
 
 
 let currentRole = 'user'; // 'user' or 'admin'
 
 let isAdminLoggedIn = false;
-try {
-  isAdminLoggedIn = sessionStorage.getItem('is_admin_logged_in') === 'true';
-} catch (e) {
-  console.warn("Session storage access denied: falling back to memory storage.", e);
-}
+let currentAdminUser = null;
 
 // IT Technicians configuration list
 const techniciansList = [
@@ -242,8 +252,10 @@ const adminOverviewPanel = document.getElementById('admin-overview-panel');
 const ticketsListSection = document.getElementById('tickets-list-section');
 const adminLoginModal = document.getElementById('admin-login-modal');
 const adminLoginForm = document.getElementById('admin-login-form');
+const adminEmailInput = document.getElementById('admin-email');
 const adminPasswordInput = document.getElementById('admin-password');
 const loginErrorMsg = document.getElementById('login-error-msg');
+const loginErrorText = document.getElementById('login-error-text');
 const techListGrid = document.getElementById('tech-list-grid');
 
 // Statistics UI Elements
@@ -305,15 +317,76 @@ const closeLightboxBtn = document.getElementById('close-lightbox-btn');
 // ----------------------------------------------------
 // Local Storage sync — บันทึกเฉพาะข้อมูลหลัก ไม่รวมรูปภาพ (Base64 ใหญ่เกิน)
 function saveStateToLocalStorage() {
+  // Never copy the shared admin dataset to a public browser profile.
+  if (isAdminLoggedIn) return;
   try {
     const ticketsWithoutPhotos = tickets.map(t => {
       const { photo, afterPhoto, ...rest } = t;
       return rest;
     });
-    localStorage.setItem('it_tickets', JSON.stringify(ticketsWithoutPhotos));
+    localStorage.setItem(USER_TICKETS_STORAGE_KEY, JSON.stringify(ticketsWithoutPhotos));
   } catch (e) {
     console.warn("Could not save to localStorage:", e);
   }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function safeImageUrl(value) {
+  const url = String(value ?? '').trim();
+  if (/^https:\/\//i.test(url) || /^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(url)) {
+    return url;
+  }
+  return '';
+}
+
+function setLoginError(message) {
+  loginErrorText.textContent = message;
+  loginErrorMsg.style.display = 'block';
+}
+
+async function userHasAdminRole(userId) {
+  if (!useSupabase || !supabaseClient || !userId) return false;
+  const { data, error } = await supabaseClient
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Admin role lookup failed:', error);
+    return false;
+  }
+  return Boolean(data);
+}
+
+async function applyAuthenticatedSession(session) {
+  const user = session?.user || null;
+  const allowed = user ? await userHasAdminRole(user.id) : false;
+  currentAdminUser = allowed ? user : null;
+  isAdminLoggedIn = allowed;
+
+  if (allowed) {
+    await fetchTicketsFromSupabase();
+    setRoleMode('admin-manage');
+  } else {
+    tickets = loadLocalTickets();
+    setRoleMode('user');
+  }
+}
+
+function requireAdmin() {
+  if (isAdminLoggedIn && currentAdminUser) return true;
+  alert('เซสชันเจ้าหน้าที่หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+  setRoleMode('user');
+  return false;
 }
 
 // Thai Date formatter
@@ -390,14 +463,8 @@ function renderTickets() {
   
   // Filter tickets matching inputs
   const filteredTickets = tickets.filter(t => {
-    const matchesSearch = 
-      t.id.toLowerCase().includes(searchQuery) ||
-      t.reporter.toLowerCase().includes(searchQuery) ||
-      t.dept.toLowerCase().includes(searchQuery) ||
-      t.model.toLowerCase().includes(searchQuery) ||
-      t.subject.toLowerCase().includes(searchQuery) ||
-      t.detail.toLowerCase().includes(searchQuery) ||
-      (t.assignee && t.assignee.toLowerCase().includes(searchQuery));
+    const matchesSearch = [t.id, t.reporter, t.dept, t.model, t.subject, t.detail, t.assignee]
+      .some(value => String(value ?? '').toLowerCase().includes(searchQuery));
       
     const matchesDevice = (deviceFilter === 'all' || t.deviceType === deviceFilter);
     const matchesStatus = (statusFilter === 'all' || t.status === statusFilter);
@@ -417,16 +484,31 @@ function renderTickets() {
     filteredTickets.forEach(t => {
       const card = document.createElement('div');
       card.className = 'ticket-card';
+
+      const safeId = escapeHtml(t.id);
+      const safeModel = escapeHtml(t.model);
+      const safeDeviceType = escapeHtml(t.deviceType);
+      const safeSubject = escapeHtml(t.subject);
+      const safeDetail = escapeHtml(t.detail);
+      const safeReporter = escapeHtml(t.reporter);
+      const safeDept = escapeHtml(t.dept);
+      const safePhone = escapeHtml(t.phone || '-');
+      const safeAssignee = escapeHtml(t.assignee || '');
+      const safeRepairResult = escapeHtml(t.repairResult || '');
+      const safePriority = escapeHtml(t.priority);
+      const safeStatus = ['pending', 'processing', 'completed'].includes(t.status) ? t.status : 'pending';
+      const beforePhotoUrl = safeImageUrl(t.photo);
+      const afterPhotoUrl = safeImageUrl(t.afterPhoto);
       
       // Floating Admin actions
       let adminActionsHTML = '';
       if (currentRole === 'admin' && t.status !== 'completed') {
         adminActionsHTML = `
           <div class="card-admin-actions">
-            <button class="card-admin-btn edit" onclick="openEditModal('${t.id}')" title="แก้ไขทุกส่วน">
+            <button type="button" class="card-admin-btn edit" data-action="edit" title="แก้ไขทุกส่วน">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
-            <button class="card-admin-btn delete" onclick="deleteTicket('${t.id}')" title="ลบใบงาน">
+            <button type="button" class="card-admin-btn delete" data-action="delete" title="ลบใบงาน">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
@@ -435,20 +517,20 @@ function renderTickets() {
       
       // Photo previews logic
       let beforePhotoHTML = `<span class="no-image-placeholder">ไม่มีรูป</span>`;
-      if (t.photo) {
+      if (beforePhotoUrl) {
         beforePhotoHTML = `
-          <button type="button" class="img-preview-trigger" onclick="showLightbox('${t.photo}', 'รูปหลักฐาน: ${t.id}')">
-            <img src="${t.photo}" alt="ก่อนซ่อม">
+          <button type="button" class="img-preview-trigger" data-image-slot="before">
+            <img alt="ก่อนซ่อม">
             <span>ดูรูป</span>
           </button>
         `;
       }
       
       let afterPhotoHTML = `<span class="no-image-placeholder">ไม่มีรูป</span>`;
-      if (t.afterPhoto) {
+      if (afterPhotoUrl) {
         afterPhotoHTML = `
-          <button type="button" class="img-preview-trigger" onclick="showLightbox('${t.afterPhoto}', 'รูปหลังซ่อม: ${t.id}')">
-            <img src="${t.afterPhoto}" alt="หลังซ่อม">
+          <button type="button" class="img-preview-trigger" data-image-slot="after">
+            <img alt="หลังซ่อม">
             <span>ดูรูป</span>
           </button>
         `;
@@ -459,8 +541,8 @@ function renderTickets() {
       if (t.status === 'completed' && t.repairResult) {
         repairSummaryHTML = `
           <div class="card-repair-summary">
-            <strong>ผลการซ่อม:</strong> ${t.repairResult}<br>
-            <strong>ผู้ซ่อม:</strong> ${t.assignee || 'ช่างไอที'}
+            <strong>ผลการซ่อม:</strong> ${safeRepairResult}<br>
+            <strong>ผู้ซ่อม:</strong> ${safeAssignee || 'ช่างไอที'}
           </div>
         `;
       }
@@ -469,22 +551,18 @@ function renderTickets() {
       const priorityClass = t.priority === 'เร่งด่วน' ? 'badge-urgent' : 'badge-normal';
       
       // Active bottom button highlighting
-      const activePendingClass = t.status === 'pending' ? 'active-pending' : '';
-      const activeProcessingClass = t.status === 'processing' ? 'active-processing' : '';
-      const activeCompletedClass = t.status === 'completed' ? 'active-completed' : '';
+      const activePendingClass = safeStatus === 'pending' ? 'active-pending' : '';
+      const activeProcessingClass = safeStatus === 'processing' ? 'active-processing' : '';
+      const activeCompletedClass = safeStatus === 'completed' ? 'active-completed' : '';
       
       // Click event attributes for admin vs disabled for user
       let isInteractiveClass = currentRole === 'admin' ? 'admin-interactive' : 'user-readonly';
-      let onPendingClick = currentRole === 'admin' ? `onclick="adminUpdateStatus('${t.id}', 'pending')"` : '';
-      let onProcessingClick = currentRole === 'admin' ? `onclick="adminUpdateStatus('${t.id}', 'processing')"` : '';
-      let onCompletedClick = currentRole === 'admin' ? `onclick="adminOpenCompleteModal('${t.id}')"` : '';
+      let statusActionAttributes = currentRole === 'admin' ? 'data-admin-action="true"' : 'disabled';
 
       // If completed, lock all status buttons so it cannot be reverted
       if (t.status === 'completed') {
         isInteractiveClass = 'user-readonly';
-        onPendingClick = '';
-        onProcessingClick = '';
-        onCompletedClick = '';
+        statusActionAttributes = 'disabled';
       }
 
       card.innerHTML = `
@@ -496,42 +574,42 @@ function renderTickets() {
               <i class="fa-solid ${getDeviceIconClass(t.deviceType)}"></i>
             </div>
             <div class="card-title-details">
-              <h3>${t.model}</h3>
-              <span class="ticket-sub-id">${t.id} · รับเข้า ${formatDateThai(t.date)}</span>
+              <h3>${safeModel}</h3>
+              <span class="ticket-sub-id">${safeId} · รับเข้า ${escapeHtml(formatDateThai(t.date))}</span>
             </div>
           </div>
           
           <!-- Badges -->
           <div class="card-badges-row">
-            <span class="card-badge badge-gray">${t.deviceType}</span>
+            <span class="card-badge badge-gray">${safeDeviceType}</span>
             <span class="badge-separator">-</span>
-            <span class="card-badge badge-${t.status}">${getStatusLabel(t.status)}</span>
-            <span class="card-badge ${priorityClass}">${t.priority}</span>
+            <span class="card-badge badge-${safeStatus}">${escapeHtml(getStatusLabel(safeStatus))}</span>
+            <span class="card-badge ${priorityClass}">${safePriority}</span>
           </div>
 
           <!-- Problem description Box -->
           <div class="card-problem-desc">
             <h4>รายละเอียดปัญหา</h4>
-            <p><strong>${t.subject}</strong>: ${t.detail}</p>
+            <p><strong>${safeSubject}</strong>: ${safeDetail}</p>
           </div>
 
           <!-- Metadata info Grid -->
           <div class="card-meta-grid">
             <div class="meta-item">
               <span class="meta-label">ผู้แจ้ง</span>
-              <span class="meta-value">${t.reporter}</span>
+              <span class="meta-value">${safeReporter}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">แผนก</span>
-              <span class="meta-value">${t.dept}</span>
+              <span class="meta-value">${safeDept}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">เบอร์โทร</span>
-              <span class="meta-value">${t.phone || '-'}</span>
+              <span class="meta-value">${safePhone}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">ช่างรับผิดชอบ</span>
-              <span class="meta-value" style="color: var(--primary-light); font-weight: 600;">${t.assignee || '<span style="color:#94a3b8; font-weight:400;">ยังไม่ระบุ</span>'}</span>
+              <span class="meta-value" style="color: var(--primary-light); font-weight: 600;">${safeAssignee || '<span class="unassigned-value">ยังไม่ระบุ</span>'}</span>
             </div>
             <div class="meta-item" style="grid-column: span 1;">
               <span class="meta-label">รูปแจ้งซ่อม</span>
@@ -548,11 +626,34 @@ function renderTickets() {
 
         <!-- Action / Status Buttons Roster -->
         <div class="card-status-buttons ${isInteractiveClass}">
-          <button type="button" class="status-btn-option ${activePendingClass}" ${onPendingClick}>รอรับเรื่อง</button>
-          <button type="button" class="status-btn-option ${activeProcessingClass}" ${onProcessingClick}>กำลังซ่อม</button>
-          <button type="button" class="status-btn-option ${activeCompletedClass}" ${onCompletedClick}>เสร็จแล้ว</button>
+          <button type="button" class="status-btn-option ${activePendingClass}" data-next-status="pending" ${statusActionAttributes}>รอรับเรื่อง</button>
+          <button type="button" class="status-btn-option ${activeProcessingClass}" data-next-status="processing" ${statusActionAttributes}>กำลังซ่อม</button>
+          <button type="button" class="status-btn-option ${activeCompletedClass}" data-next-status="completed" ${statusActionAttributes}>เสร็จแล้ว</button>
         </div>
       `;
+
+      card.querySelector('[data-action="edit"]')?.addEventListener('click', () => openEditModal(t.id));
+      card.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteTicket(t.id));
+
+      const beforeImageButton = card.querySelector('[data-image-slot="before"]');
+      if (beforeImageButton) {
+        beforeImageButton.querySelector('img').src = beforePhotoUrl;
+        beforeImageButton.addEventListener('click', () => showLightbox(beforePhotoUrl, `รูปหลักฐาน: ${t.id}`));
+      }
+
+      const afterImageButton = card.querySelector('[data-image-slot="after"]');
+      if (afterImageButton) {
+        afterImageButton.querySelector('img').src = afterPhotoUrl;
+        afterImageButton.addEventListener('click', () => showLightbox(afterPhotoUrl, `รูปหลังซ่อม: ${t.id}`));
+      }
+
+      card.querySelectorAll('[data-admin-action="true"]').forEach(button => {
+        button.addEventListener('click', () => {
+          const nextStatus = button.dataset.nextStatus;
+          if (nextStatus === 'completed') adminOpenCompleteModal(t.id);
+          else adminUpdateStatus(t.id, nextStatus);
+        });
+      });
       ticketsContainer.appendChild(card);
     });
   }
@@ -830,6 +931,7 @@ function setRoleMode(mode) {
 
 // Admin transitions status from status buttons
 function adminUpdateStatus(ticketId, nextStatus) {
+  if (!requireAdmin()) return;
   const index = tickets.findIndex(t => t.id === ticketId);
   if (index === -1) return;
 
@@ -852,6 +954,7 @@ function adminUpdateStatus(ticketId, nextStatus) {
 
 // Helper to push status updates to Supabase
 function updateSupabaseStatus(ticketId, updateFields) {
+  if (!requireAdmin()) return;
   if (useSupabase && supabaseClient) {
     supabaseClient.from('tickets').update(updateFields).eq('id', ticketId).then(({ error }) => {
       if (error) console.error("Supabase update status failed:", error);
@@ -860,6 +963,7 @@ function updateSupabaseStatus(ticketId, updateFields) {
 }
 // Admin opens complete-job modal
 function adminOpenCompleteModal(ticketId) {
+  if (!requireAdmin()) return;
   const ticket = tickets.find(t => t.id === ticketId);
   if (!ticket) return;
 
@@ -879,6 +983,7 @@ function adminOpenCompleteModal(ticketId) {
 
 // Admin opens edit modal
 function openEditModal(ticketId) {
+  if (!requireAdmin()) return;
   const ticket = tickets.find(t => t.id === ticketId);
   if (!ticket) return;
 
@@ -939,6 +1044,7 @@ function openEditModal(ticketId) {
 
 // Admin deletes a ticket
 function deleteTicket(ticketId) {
+  if (!requireAdmin()) return;
   if (confirm(`คุณต้องการลบรายการแจ้งซ่อมรหัส ${ticketId} หรือไม่?`)) {
     tickets = tickets.filter(t => t.id !== ticketId);
     saveStateAndRender();
@@ -969,39 +1075,66 @@ tabDashboardBtn.addEventListener('click', () => setRoleMode('admin-dashboard'));
 
 // Login & Logout switches
 tabLoginBtn.addEventListener('click', () => {
+  adminEmailInput.value = '';
   adminPasswordInput.value = '';
   loginErrorMsg.style.display = 'none';
   openModal(adminLoginModal);
 });
 
-tabLogoutBtn.addEventListener('click', () => {
+tabLogoutBtn.addEventListener('click', async () => {
   if (confirm('คุณต้องการออกจากระบบเจ้าหน้าที่หรือไม่?')) {
-    isAdminLoggedIn = false;
-    try {
-      sessionStorage.removeItem('is_admin_logged_in');
-    } catch (e) {
-      console.warn("Could not remove from sessionStorage:", e);
+    if (useSupabase && supabaseClient) {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) {
+        alert('ออกจากระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
     }
+    isAdminLoggedIn = false;
+    currentAdminUser = null;
+    tickets = loadLocalTickets();
     setRoleMode('user');
   }
 });
 
-// Admin login form submit check
-adminLoginForm.addEventListener('submit', function(e) {
+// Admin authentication is verified by Supabase Auth and the admin_users table.
+adminLoginForm.addEventListener('submit', async function(e) {
   e.preventDefault();
+  const email = adminEmailInput.value.trim();
   const password = adminPasswordInput.value.trim();
-  
-  if (password === '36335') {
-    isAdminLoggedIn = true;
-    try {
-      sessionStorage.setItem('is_admin_logged_in', 'true');
-    } catch (e) {
-      console.warn("Could not set in sessionStorage:", e);
+
+  if (!useSupabase || !supabaseClient) {
+    setLoginError('ยังไม่ได้ตั้งค่า Supabase จึงไม่สามารถเข้าสู่ระบบเจ้าหน้าที่ได้');
+    return;
+  }
+
+  const submitButton = adminLoginForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  submitButton.textContent = 'กำลังตรวจสอบ...';
+  loginErrorMsg.style.display = 'none';
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error || !data.session) throw error || new Error('Missing session');
+
+    const allowed = await userHasAdminRole(data.user.id);
+    if (!allowed) {
+      await supabaseClient.auth.signOut();
+      setLoginError('บัญชีนี้ไม่มีสิทธิ์เจ้าหน้าที่');
+      return;
     }
+
+    currentAdminUser = data.user;
+    isAdminLoggedIn = true;
+    await fetchTicketsFromSupabase();
     closeModal('admin-login-modal');
-    setRoleMode('admin-manage'); // Auto switch to repair management on success
-  } else {
-    loginErrorMsg.style.display = 'block';
+    setRoleMode('admin-manage');
+  } catch (error) {
+    console.error('Admin login failed:', error);
+    setLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = 'ยืนยันเข้าสู่ระบบ';
   }
 });
 
@@ -1066,11 +1199,31 @@ imageLightbox.addEventListener('click', (e) => {
 // 9. Input & Upload File Preview Handler (FileReader Base64)
 // ----------------------------------------------------
 
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
+function validateImageFile(file) {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    return 'รองรับเฉพาะไฟล์ JPG, PNG และ WebP';
+  }
+  if (file.size > MAX_IMAGE_SIZE_BYTES) {
+    return 'รูปภาพต้องมีขนาดไม่เกิน 5 MB';
+  }
+  return '';
+}
+
 // Convert and preview helper
 function handleImageFileSelect(inputElement, previewContainer, previewImage, callback, fileCallback) {
   inputElement.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      alert(validationError);
+      inputElement.value = '';
+      return;
+    }
 
     if (fileCallback) fileCallback(file);
 
@@ -1219,12 +1372,8 @@ newTicketForm.addEventListener('submit', async function(e) {
     afterPhoto: ''
   };
 
-  tickets.unshift(newTicket); // Add to beginning of array
-  saveStateAndRender();
-  closeModal('new-ticket-modal');
-
   if (useSupabase && supabaseClient) {
-    supabaseClient.from('tickets').insert([{
+    const { error } = await supabaseClient.from('tickets').insert([{
       id: newTicket.id,
       reporter: newTicket.reporter,
       dept: newTicket.dept,
@@ -1240,15 +1389,24 @@ newTicketForm.addEventListener('submit', async function(e) {
       assignee: newTicket.assignee,
       repair_result: newTicket.repairResult,
       after_photo: newTicket.afterPhoto
-    }]).then(({ error }) => {
-      if (error) console.error("Supabase insert failed:", error);
-    });
+    }]);
+
+    if (error) {
+      console.error('Supabase insert failed:', error);
+      alert('ส่งใบแจ้งซ่อมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
   }
+
+  tickets.unshift(newTicket); // Show only in the reporter's current browser.
+  saveStateAndRender();
+  closeModal('new-ticket-modal');
 });
 
 // Form submit: Assign Job (กำลังซ่อม)
 assignJobForm.addEventListener('submit', function(e) {
   e.preventDefault();
+  if (!requireAdmin()) return;
   
   const ticketId = document.getElementById('assign-ticket-id').value;
   const assignee = document.getElementById('assign-tech').value;
@@ -1271,6 +1429,7 @@ assignJobForm.addEventListener('submit', function(e) {
 // Form submit: Close job (เสร็จสิ้นการซ่อม)
 completeJobForm.addEventListener('submit', async function(e) {
   e.preventDefault();
+  if (!requireAdmin()) return;
   
   const ticketId = document.getElementById('complete-ticket-id').value;
   const assignee = document.getElementById('assignee-tech').value.trim();
@@ -1325,6 +1484,7 @@ completeJobForm.addEventListener('submit', async function(e) {
 // Form submit: Edit Ticket (แก้ไขทุกส่วน - แอดมิน)
 editTicketForm.addEventListener('submit', async function(e) {
   e.preventDefault();
+  if (!requireAdmin()) return;
   
   const ticketId = document.getElementById('edit-ticket-id').value;
   const index = tickets.findIndex(t => t.id === ticketId);
@@ -1410,18 +1570,24 @@ editTicketForm.addEventListener('submit', async function(e) {
 // 11. Initial On-Load Trigger
 // ----------------------------------------------------
 async function initApp() {
-  if (useSupabase && supabaseClient) {
-    await fetchTicketsFromSupabase();
-  }
-  updateStatistics();
-  renderTickets();
-  
-  // Enforce appropriate view based on login state
-  if (isAdminLoggedIn) {
-    setRoleMode('admin-manage');
-  } else {
+  if (!useSupabase || !supabaseClient) {
+    updateStatistics();
     setRoleMode('user');
+    return;
   }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) console.error('Could not restore Supabase session:', error);
+  await applyAuthenticatedSession(data?.session || null);
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') {
+      currentAdminUser = null;
+      isAdminLoggedIn = false;
+      tickets = loadLocalTickets();
+      setRoleMode('user');
+    }
+  });
 }
 
 // Boot

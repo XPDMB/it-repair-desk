@@ -9,6 +9,12 @@
   
   --secondary: #64748b;     /* Slate Gray */
   --secondary-light: #f8fafc;
+  --secondary-lightest: #f8fafc;
+  --white: #ffffff;
+  --primary-lightest: #eef2ff;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #e11d48;
   
   /* Polished Status Colors */
   --status-pending-text: #d97706;  /* Amber */
@@ -1048,6 +1054,9 @@ body {
 }
 
 .form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="tel"],
 .form-group select,
 .form-group textarea {
   width: 100%;
@@ -1062,6 +1071,9 @@ body {
 }
 
 .form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus,
+.form-group input[type="tel"]:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--primary-light);
@@ -1559,6 +1571,9 @@ html {
 
   /* Increase tap area for inputs and dropdowns */
   .form-group input[type="text"],
+  .form-group input[type="email"],
+  .form-group input[type="password"],
+  .form-group input[type="tel"],
   .form-group select,
   .form-group textarea,
   .search-box input,
