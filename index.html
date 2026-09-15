@@ -57,7 +57,7 @@
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=20260915-paper-typography">
+  <link rel="stylesheet" href="styles.css?v=20260915-scanned-template">
 </head>
 <body>
 
@@ -267,58 +267,26 @@
       </div>
 
       <div id="internet-print-sheet" class="internet-print-sheet" aria-label="ตัวอย่างใบลงทะเบียนอินเทอร์เน็ต">
-        <div class="memo-title">บันทึกข้อความ</div>
-        <div class="memo-header-block">
-          <div class="memo-line"><strong>ส่วนราชการ</strong> <span data-print-field="agency"></span></div>
-          <div class="memo-two-col memo-document-row">
-            <div class="memo-line"><strong>ที่</strong> <span data-print-field="documentNo"></span></div>
-            <div class="memo-line"><strong>วันที่</strong> <span data-print-field="documentDate"></span></div>
-          </div>
-          <div class="memo-line memo-subject-line"><strong>เรื่อง</strong> <span>ขออนุญาตลงทะเบียนใช้งานระบบเครือข่ายกรมช่างอากาศ และเครือข่ายกองทัพอากาศ</span></div>
+        <div class="internet-template-page">
+          <img src="internet-registration-form-template.png" alt="แบบฟอร์มบันทึกข้อความขออนุญาตลงทะเบียนใช้งานระบบเครือข่าย">
+          <span class="template-value template-agency" data-print-field="agency"></span>
+          <span class="template-value template-document-no" data-print-field="documentNo"></span>
+          <span class="template-value template-document-date" data-print-field="documentDate"></span>
+          <span class="template-value template-fullname" data-print-field="fullname"></span>
+          <span class="template-value template-airforce-id" data-print-field="airforceId"></span>
+          <span class="template-value template-national-id" data-print-field="nationalId"></span>
+          <span class="template-value template-position" data-print-field="position"></span>
+          <span class="template-value template-affiliation" data-print-field="affiliation"></span>
+          <span class="template-value template-internal-phone" data-print-field="internalPhone"></span>
+          <span class="template-value template-phone" data-print-field="phone"></span>
+          <span class="template-value template-device-type" data-print-field="deviceType"></span>
+          <span class="template-value template-device-brand" data-print-field="deviceBrand"></span>
+          <span class="template-value template-mac-address" data-print-field="macAddress"></span>
+          <span class="template-value template-location" data-print-field="location"></span>
+          <span class="template-value template-legal-name" data-print-field="fullname"></span>
+          <span class="template-value template-signature-name" data-print-field="fullname"></span>
         </div>
-        <p class="memo-recipient"><strong>เรียน</strong> เสธ.ชอ. (ผ่าน หก.กกม.บก.ชอ.)</p>
-
-        <div class="memo-body">
-          <div class="memo-field-row memo-first-line"><span class="memo-indent">๑.</span><span>ด้วย กระผม/ดิฉัน</span><span class="memo-fill" data-print-field="fullname"></span></div>
-          <div class="memo-two-col memo-detail-grid">
-            <div class="memo-field-row"><span>หมายเลขประจำตัว ทอ.</span><span class="memo-fill" data-print-field="airforceId"></span></div>
-            <div class="memo-field-row"><span>หมายเลขบัตรประชาชน</span><span class="memo-fill" data-print-field="nationalId"></span></div>
-            <div class="memo-field-row"><span>ตำแหน่ง</span><span class="memo-fill" data-print-field="position"></span></div>
-            <div class="memo-field-row"><span>สังกัด</span><span class="memo-fill" data-print-field="affiliation"></span></div>
-            <div class="memo-field-row"><span>หมายเลขโทรศัพท์ภายใน</span><span class="memo-fill" data-print-field="internalPhone"></span></div>
-            <div class="memo-field-row"><span>หมายเลขโทรศัพท์ที่ติดต่อได้</span><span class="memo-fill" data-print-field="phone"></span></div>
-            <div class="memo-field-row"><span>เป็นเจ้าของ/ผู้ใช้อุปกรณ์ประเภท</span><span class="memo-fill" data-print-field="deviceType"></span></div>
-            <div class="memo-field-row"><span>ยี่ห้อ</span><span class="memo-fill" data-print-field="deviceBrand"></span></div>
-          </div>
-          <div class="memo-field-row"><span>หมายเลขประจำเครื่อง (Mac Address)</span><span class="memo-fill" data-print-field="macAddress"></span></div>
-          <p class="memo-request-text">มีความประสงค์จะขออนุญาตลงทะเบียนใช้งานระบบเครือข่ายกรมช่างอากาศ และเครือข่ายกองทัพอากาศ</p>
-          <div class="memo-field-row"><span>บริเวณ</span><span class="memo-fill" data-print-field="location"></span></div>
-          <p class="memo-law-paragraph"><span class="memo-indent">๒.</span> กระผม/ดิฉันได้ทราบและเข้าใจเกี่ยวกับการกระทำความผิดตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ.๒๕๕๐ เป็นอย่างดีแล้ว ดังนั้น หากกระผม/ดิฉัน ได้กระทำความผิดตามพระราชบัญญัติดังกล่าว กระผม/ดิฉัน <span class="memo-inline-fill" data-print-field="fullname"></span> จะขอรับผิดชอบตามความผิดที่ได้กระทำไว้ทุกประการ</p>
-          <p class="memo-closing">จึงเรียนมาเพื่อพิจารณาอนุญาต</p>
-        </div>
-
-        <div class="memo-signature applicant-signature">
-          <p>ลงชื่อ ...............................................................</p>
-          <p>(<span data-print-field="fullname"></span>)</p>
-        </div>
-        <div class="memo-approval-flow">
-          <div class="memo-approval-block memo-first-approval">
-            <p class="approval-lead">เรียน เสธ.ชอ.</p>
-            <p>เพื่อพิจารณาอนุญาต</p>
-            <div class="approval-signature-space"></div>
-            <p>น.อ.</p>
-            <p>หก.กกม.บก.ชอ.</p>
-            <p>........../........../..........</p>
-          </div>
-          <div class="memo-approval-block memo-final-approval">
-            <p class="approval-lead">อนุญาต</p>
-            <div class="approval-signature-space"></div>
-            <p>พล.อ.ต.</p>
-            <p>เสธ.ชอ.</p>
-            <p>........../........../..........</p>
-          </div>
-        </div>
-        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ตัวอย่างเอกสารจะอัปเดตตามข้อมูลที่กรอก เมื่อพร้อมให้กด “ตรวจสอบก่อนพิมพ์” ด้านบน</p>
+        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ใช้ใบต้นฉบับที่แนบมาเป็นแม่แบบโดยตรง ข้อมูลที่กรอกจะวางลงในช่องว่างของเอกสาร</p>
       </div>
     </section>
 

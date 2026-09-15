@@ -1150,7 +1150,7 @@ function renderInternetPrintSheet() {
   Object.keys(internetFieldMap).forEach((key) => {
     const displayValue = key === 'documentDate' ? formatThaiDocumentDate(data[key]) : data[key];
     internetPrintSheet.querySelectorAll(`[data-print-field="${key}"]`).forEach((element) => {
-      element.textContent = displayValue || ' ';
+      element.textContent = displayValue || '';
     });
   });
 }

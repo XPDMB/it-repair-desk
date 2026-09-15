@@ -3262,6 +3262,78 @@ svg {
   font-size: 0.75rem;
 }
 
+/* Scanned official form supplied by the user. Values are positioned over
+   the original blank lines so the on-screen preview and A4 print match it. */
+.internet-print-sheet {
+  width: min(100%, 210mm);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.internet-template-page {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 817 / 1119;
+  overflow: hidden;
+  background: #fff;
+  container-type: inline-size;
+}
+
+.internet-template-page > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.template-value {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  min-height: 1.9%;
+  overflow: hidden;
+  color: #000;
+  font-family: 'TH Sarabun New', 'Sarabun', Tahoma, sans-serif;
+  font-size: clamp(7px, 2.05vw, 17px);
+  font-weight: 500;
+  line-height: 1.05;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-value:not(:empty) {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.template-airforce-id,
+.template-national-id,
+.template-internal-phone,
+.template-phone {
+  font-size: clamp(6px, 1.75vw, 14px);
+}
+
+.template-agency { top: 12.85%; left: 24%; width: 62.5%; }
+.template-document-no { top: 15.35%; left: 15.5%; width: 33%; }
+.template-document-date { top: 15.35%; left: 54.5%; width: 32%; }
+.template-fullname { top: 23.75%; left: 38%; width: 22%; }
+.template-airforce-id { top: 23.75%; left: 77.5%; width: 9%; }
+.template-national-id { top: 25.85%; left: 34%; width: 16%; }
+.template-position { top: 25.85%; left: 57%; width: 29.5%; }
+.template-affiliation { top: 27.95%; left: 16%; width: 20.5%; }
+.template-internal-phone { top: 27.95%; left: 53.5%; width: 10%; }
+.template-phone { top: 27.95%; left: 79%; width: 7.5%; }
+.template-device-type { top: 30.05%; left: 35%; width: 26%; }
+.template-device-brand { top: 30.05%; left: 71%; width: 15.5%; }
+.template-mac-address { top: 32.15%; left: 41%; width: 45.5%; }
+.template-location { top: 36.15%; left: 18%; width: 68.5%; }
+.template-legal-name { top: 43.15%; left: 52%; width: 34.5%; }
+.template-signature-name { top: 57.05%; left: 52.5%; width: 25%; }
+
 @media (max-width: 768px) {
   .service-choice-grid,
   .internet-form-grid,
@@ -3316,9 +3388,7 @@ svg {
 
   .internet-print-sheet {
     min-height: auto;
-    padding: 1rem;
-    font-size: 11px;
-    line-height: 1.45;
+    padding: 0;
   }
 
   .memo-title {
@@ -3341,7 +3411,7 @@ svg {
 
 @page internet-form {
   size: A4 portrait;
-  margin: 12mm;
+  margin: 0;
 }
 
 @media print {
@@ -3369,9 +3439,12 @@ svg {
     border: 0;
     box-shadow: none;
     page: internet-form;
-    font-size: 15pt;
-    font-weight: 500;
-    line-height: 1.24;
+  }
+
+  body.printing-internet-form .internet-template-page {
+    width: 210mm;
+    height: auto;
+    aspect-ratio: 817 / 1119;
   }
 
   body.printing-internet-form .memo-title {
