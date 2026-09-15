@@ -3530,3 +3530,9 @@ svg {
 .admin-internet-row { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; border:1px solid var(--border-color,#d7dde7); border-radius:14px; background:#fff; cursor:pointer; }
 .admin-internet-row span { display:grid; gap:.2rem; flex:1; }
 .admin-internet-row small, .admin-internet-row time { color:#64748b; font-size:.9rem; }
+.jp-template-overlay { position:relative; width:100%; line-height:1; }
+.jp-template-overlay > img { display:block; width:100%; height:auto; }
+.jp-value { position:absolute; color:#111; font-family:'TH Sarabun New','TH SarabunPSK',Sarabun,Tahoma,sans-serif; font-size:3.1%; font-weight:600; white-space:nowrap; }
+.internet-print-sheet > :not(.jp-template-overlay) { display:none !important; }
+.internet-print-sheet { padding:0 !important; border:0 !important; box-shadow:none !important; font-size:inherit !important; }
+.jp-agency{left:20%;top:11.55%}.jp-docno{left:16%;top:14.45%}.jp-date{left:51%;top:14.45%}.jp-name{left:39%;top:23.8%}.jp-airforce{left:79%;top:23.8%}.jp-national{left:27%;top:26.9%}.jp-position{left:40%;top:26.9%}.jp-affiliation{left:20%;top:29.8%}.jp-internal{left:51%;top:29.8%}.jp-phone{left:80%;top:29.8%}.jp-device{left:38%;top:32.9%}.jp-brand{left:70%;top:32.9%}.jp-mac{left:44%;top:36.1%}.jp-location{left:21%;top:42.2%}
