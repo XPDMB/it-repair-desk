@@ -3532,6 +3532,8 @@ svg {
 .admin-internet-row small, .admin-internet-row time { color:#64748b; font-size:.9rem; }
 /* The current deployment is repair-only; keep the previous registration workflow hidden. */
 .internet-service-card, #internet-registration-section, #admin-internet-registrations { display:none !important; }
+.service-choice-grid { grid-template-columns: minmax(280px, 520px); justify-content:center; }
+.service-privacy-note { display:none !important; }
 .jp-template-overlay { position:relative; width:100%; line-height:1; }
 .jp-template-overlay > img { display:block; width:100%; height:auto; }
 .jp-value { position:absolute; color:#111; font-family:'TH Sarabun New','TH SarabunPSK',Sarabun,Tahoma,sans-serif; font-size:3.1%; font-weight:600; white-space:nowrap; }
