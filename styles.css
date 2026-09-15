@@ -1945,6 +1945,350 @@ html {
 }
 
 /* =========================================================
+   VISUAL REFRESH 2026
+   A brighter, more polished visual layer that keeps every
+   existing interaction and layout rule intact.
+   ========================================================= */
+
+:root {
+  --surface-glass: rgba(255, 255, 255, 0.86);
+  --surface-soft: #f8faff;
+  --border-soft: rgba(99, 102, 241, 0.12);
+  --shadow-soft: 0 10px 30px rgba(30, 41, 59, 0.07);
+  --shadow-float: 0 18px 45px rgba(49, 46, 129, 0.13);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 5%, rgba(99, 102, 241, 0.09), transparent 28rem),
+    radial-gradient(circle at 92% 18%, rgba(14, 165, 233, 0.07), transparent 24rem),
+    linear-gradient(180deg, #f7f8ff 0%, #f4f7fb 52%, #f8fafc 100%);
+  background-attachment: fixed;
+}
+
+.app-header {
+  background:
+    radial-gradient(circle at 18% -80%, rgba(255, 255, 255, 0.3), transparent 48%),
+    linear-gradient(120deg, #3730a3 0%, #4f46e5 48%, #2563eb 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 32px rgba(49, 46, 129, 0.2);
+}
+
+.logo-icon {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 22px rgba(30, 27, 75, 0.22);
+}
+
+.logo-text h1 {
+  letter-spacing: 0.015em;
+  text-shadow: 0 2px 12px rgba(30, 27, 75, 0.25);
+}
+
+.logo-subtitle {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tab-toggle-container {
+  background: rgba(30, 27, 75, 0.3);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.tab-btn.active {
+  box-shadow: 0 5px 16px rgba(30, 27, 75, 0.2);
+}
+
+.btn {
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 42%, #4f46e5 100%);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 7px 18px rgba(49, 46, 129, 0.22);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 54%, #3730a3 100%);
+  box-shadow: 0 10px 24px rgba(49, 46, 129, 0.28);
+}
+
+.main-content {
+  position: relative;
+}
+
+.admin-banner {
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.96), rgba(238, 242, 255, 0.96));
+  border-color: rgba(59, 130, 246, 0.24);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.07);
+}
+
+.stat-card {
+  min-height: 96px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.94));
+  border-color: var(--border-soft);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  isolation: isolate;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 92px;
+  height: 92px;
+  right: -38px;
+  bottom: -48px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.035;
+}
+
+.stat-card:hover {
+  border-color: rgba(99, 102, 241, 0.22);
+  box-shadow: var(--shadow-float);
+}
+
+.stat-icon {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 7px 18px rgba(30, 41, 59, 0.08);
+}
+
+.stat-value {
+  letter-spacing: -0.04em;
+}
+
+.filter-section {
+  background: var(--surface-glass);
+  border-color: rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px);
+}
+
+.search-box input,
+.select-wrapper select {
+  background-color: rgba(248, 250, 252, 0.9);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.search-box input:hover,
+.select-wrapper select:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  background-color: #fff;
+}
+
+.search-box input:focus,
+.select-wrapper select:focus {
+  border-color: #6366f1;
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.11);
+}
+
+.section-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.section-title::before {
+  width: 5px;
+  background: linear-gradient(180deg, #818cf8, #4f46e5);
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
+}
+
+.results-badge {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(99, 102, 241, 0.16);
+  color: #4338ca;
+  box-shadow: 0 4px 12px rgba(49, 46, 129, 0.06);
+}
+
+.tickets-grid {
+  gap: 1.35rem;
+}
+
+.ticket-card {
+  background: linear-gradient(155deg, #ffffff 0%, #ffffff 72%, #fafbff 100%);
+  border-color: rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.ticket-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6 48%, #38bdf8);
+  opacity: 0.78;
+}
+
+.ticket-card:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-float);
+}
+
+.card-device-icon-box {
+  background: linear-gradient(145deg, #eef2ff, #eff6ff);
+  border-color: rgba(99, 102, 241, 0.18);
+  color: #4f46e5;
+  box-shadow: inset 0 1px 0 #fff, 0 6px 15px rgba(79, 70, 229, 0.09);
+}
+
+.card-title-details h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.card-badge {
+  border-radius: var(--radius-full);
+  padding-inline: 0.6rem;
+}
+
+.card-problem-desc {
+  background: linear-gradient(135deg, #f8faff, #f8fafc);
+  border-left-color: #6366f1;
+  border-radius: 8px;
+}
+
+.card-repair-summary {
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.status-btn-option {
+  border-radius: 10px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.status-btn-option:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(30, 41, 59, 0.08);
+}
+
+.yearly-report-header,
+.yearly-table-section,
+.chart-card,
+.tech-card-item {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 255, 0.96));
+  border-color: var(--border-soft);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.yearly-report-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.yearly-report-header::after {
+  content: '';
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -100px;
+  top: -130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.16), transparent 68%);
+  pointer-events: none;
+}
+
+.yearly-kpi-card {
+  border-color: rgba(99, 102, 241, 0.13);
+  box-shadow: 0 8px 22px rgba(30, 41, 59, 0.05);
+}
+
+.modal-overlay {
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(7px);
+}
+
+.modal-box,
+.modal-box form {
+  border-radius: 20px;
+}
+
+.modal-box {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.26);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #f8faff, #fff);
+  border-bottom-color: rgba(99, 102, 241, 0.12);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.32);
+  outline-offset: 2px;
+}
+
+.app-footer {
+  background: rgba(255, 255, 255, 0.68);
+  border-top-color: rgba(148, 163, 184, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.tickets-grid {
+  align-items: stretch;
+}
+
+.ticket-card {
+  height: 100%;
+}
+
+.card-status-buttons {
+  margin-top: auto;
+}
+
+.empty-state {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed rgba(99, 102, 241, 0.25);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+@media (min-width: 993px) {
+  .main-content {
+    max-width: 1360px;
+    padding-top: 1.75rem;
+  }
+
+  .summary-section {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .filter-section {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) auto;
+  }
+
+  .filter-controls {
+    flex-wrap: nowrap;
+  }
+
+  .tickets-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .tickets-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================================
    PHONE-SAFE LAYOUT (iPhone, Android and extra-small screens)
    These overrides intentionally come last so they normalize the
    earlier tablet/mobile rules without changing the desktop layout.
