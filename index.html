@@ -57,7 +57,7 @@
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=20260915-visual">
+  <link rel="stylesheet" href="styles.css?v=20260915-internet-registration">
 </head>
 <body>
 
@@ -92,7 +92,7 @@
             <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
           </button>
         </div>
-        <button id="open-new-ticket-btn" class="btn btn-primary">
+        <button id="open-new-ticket-btn" class="btn btn-primary hidden">
           <i class="fa-solid fa-plus"></i> แจ้งซ่อมใหม่
         </button>
       </div>
@@ -109,8 +109,197 @@
       </div>
     </div>
 
+    <!-- Service landing page for general users -->
+    <section id="service-home-panel" class="content-section service-home-panel">
+      <div class="service-hero">
+        <span class="service-eyebrow"><i class="fa-solid fa-layer-group"></i> ศูนย์บริการงานไอที</span>
+        <h2>เลือกบริการที่ต้องการดำเนินการ</h2>
+        <p>แจ้งปัญหาอุปกรณ์ หรือจัดทำใบขอลงทะเบียนใช้งานเครือข่ายได้จากหน้านี้</p>
+      </div>
+      <div class="service-choice-grid">
+        <button id="choose-repair-service" class="service-choice-card repair-service-card" type="button">
+          <span class="service-choice-icon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+          <span class="service-choice-content">
+            <strong>แจ้งซ่อมอุปกรณ์</strong>
+            <small>แจ้งปัญหาคอมพิวเตอร์ เครื่องพิมพ์ และอุปกรณ์ไอที</small>
+            <span class="service-choice-action">เข้าสู่ระบบแจ้งซ่อม <i class="fa-solid fa-arrow-right"></i></span>
+          </span>
+        </button>
+        <button id="choose-internet-service" class="service-choice-card internet-service-card" type="button">
+          <span class="service-choice-icon"><i class="fa-solid fa-wifi"></i></span>
+          <span class="service-choice-content">
+            <strong>ลงทะเบียนอินเทอร์เน็ต</strong>
+            <small>กรอกใบขออนุญาตใช้งานเครือข่ายและพิมพ์เอกสาร A4</small>
+            <span class="service-choice-action">กรอกใบลงทะเบียน <i class="fa-solid fa-arrow-right"></i></span>
+          </span>
+        </button>
+      </div>
+      <div class="service-privacy-note">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>ข้อมูลในใบลงทะเบียนอินเทอร์เน็ตบันทึกเป็นร่างเฉพาะในเบราว์เซอร์เครื่องนี้ และจะไม่ถูกส่งขึ้นฐานข้อมูล</span>
+      </div>
+    </section>
+
+    <!-- Internet registration workflow -->
+    <section id="internet-registration-section" class="content-section hidden">
+      <div class="subpage-toolbar no-print">
+        <button id="internet-back-home" class="btn btn-secondary-outline" type="button">
+          <i class="fa-solid fa-arrow-left"></i> กลับหน้าเลือกบริการ
+        </button>
+        <div>
+          <span class="service-eyebrow"><i class="fa-solid fa-wifi"></i> งานบริการเครือข่าย</span>
+          <h2>ใบแจ้งลงทะเบียนอินเทอร์เน็ต</h2>
+          <p>กรอกข้อมูลให้ครบ ตรวจสอบตัวอย่าง แล้วกดพิมพ์ใบลงทะเบียน</p>
+        </div>
+      </div>
+
+      <div class="internet-workspace no-print">
+        <form id="internet-registration-form" class="internet-form-card">
+          <div class="form-section-heading">
+            <span>1</span>
+            <div><strong>ข้อมูลหนังสือ</strong><small>ส่วนราชการ เลขที่หนังสือ และวันที่</small></div>
+          </div>
+          <div class="form-grid internet-form-grid">
+            <div class="form-group form-span-2">
+              <label for="internet-agency">ส่วนราชการ</label>
+              <input type="text" id="internet-agency" placeholder="ระบุส่วนราชการ">
+            </div>
+            <div class="form-group">
+              <label for="internet-document-no">ที่</label>
+              <input type="text" id="internet-document-no" placeholder="เลขที่หนังสือ">
+            </div>
+            <div class="form-group">
+              <label for="internet-document-date">วันที่</label>
+              <input type="date" id="internet-document-date">
+            </div>
+          </div>
+
+          <div class="form-section-heading">
+            <span>2</span>
+            <div><strong>ข้อมูลผู้ขอลงทะเบียน</strong><small>ข้อมูลสำหรับระบุตัวตนและติดต่อกลับ</small></div>
+          </div>
+          <div class="form-grid internet-form-grid">
+            <div class="form-group form-span-2">
+              <label for="internet-fullname" class="required">ยศ ชื่อ และนามสกุล</label>
+              <input type="text" id="internet-fullname" required placeholder="เช่น จ.อ.สมชาย ใจดี">
+            </div>
+            <div class="form-group">
+              <label for="internet-airforce-id">หมายเลขประจำตัว ทอ.</label>
+              <input type="text" id="internet-airforce-id" inputmode="numeric" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="internet-national-id">หมายเลขบัตรประชาชน</label>
+              <input type="text" id="internet-national-id" inputmode="numeric" autocomplete="off" maxlength="17" placeholder="ข้อมูลนี้เก็บในเครื่องเท่านั้น">
+            </div>
+            <div class="form-group">
+              <label for="internet-position">ตำแหน่ง</label>
+              <input type="text" id="internet-position">
+            </div>
+            <div class="form-group">
+              <label for="internet-affiliation">สังกัด</label>
+              <input type="text" id="internet-affiliation">
+            </div>
+            <div class="form-group">
+              <label for="internet-internal-phone">หมายเลขโทรศัพท์ภายใน</label>
+              <input type="tel" id="internet-internal-phone" inputmode="tel">
+            </div>
+            <div class="form-group">
+              <label for="internet-phone">หมายเลขโทรศัพท์ที่ติดต่อได้</label>
+              <input type="tel" id="internet-phone" inputmode="tel">
+            </div>
+          </div>
+
+          <div class="form-section-heading">
+            <span>3</span>
+            <div><strong>ข้อมูลอุปกรณ์และพื้นที่ใช้งาน</strong><small>ข้อมูลอุปกรณ์ที่จะเชื่อมต่อกับเครือข่าย</small></div>
+          </div>
+          <div class="form-grid internet-form-grid">
+            <div class="form-group">
+              <label for="internet-device-type" class="required">ประเภทอุปกรณ์</label>
+              <select id="internet-device-type" required>
+                <option value="" selected disabled>เลือกประเภทอุปกรณ์</option>
+                <option>คอมพิวเตอร์ตั้งโต๊ะ</option>
+                <option>โน้ตบุ๊ก</option>
+                <option>โทรศัพท์มือถือ</option>
+                <option>แท็บเล็ต</option>
+                <option>อุปกรณ์อื่น ๆ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="internet-device-brand">ยี่ห้อ / รุ่น</label>
+              <input type="text" id="internet-device-brand">
+            </div>
+            <div class="form-group form-span-2">
+              <label for="internet-mac-address" class="required">หมายเลขประจำเครื่อง (MAC Address)</label>
+              <input type="text" id="internet-mac-address" required placeholder="เช่น AA:BB:CC:DD:EE:FF" autocapitalize="characters">
+            </div>
+            <div class="form-group form-span-2">
+              <label for="internet-location" class="required">บริเวณที่ประสงค์ใช้งาน</label>
+              <input type="text" id="internet-location" required placeholder="อาคาร ชั้น ห้อง หรือหน่วยงาน">
+            </div>
+          </div>
+
+          <label class="internet-consent">
+            <input type="checkbox" id="internet-consent" required>
+            <span>ข้าพเจ้ารับทราบและเข้าใจเกี่ยวกับการกระทำความผิดตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2550 และยินยอมรับผิดชอบต่อการใช้งานของตน</span>
+          </label>
+          <div class="internet-form-actions">
+            <span id="internet-draft-status" class="draft-status"><i class="fa-solid fa-circle-check"></i> บันทึกร่างอัตโนมัติในเครื่องนี้</span>
+            <button id="clear-internet-form" class="btn btn-secondary-outline" type="button"><i class="fa-solid fa-eraser"></i> ล้างข้อมูล</button>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-print"></i> ตรวจสอบและพิมพ์</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="internet-print-sheet" class="internet-print-sheet" aria-label="ตัวอย่างใบลงทะเบียนอินเทอร์เน็ต">
+        <div class="memo-title">บันทึกข้อความ</div>
+        <div class="memo-line"><strong>ส่วนราชการ</strong> <span data-print-field="agency"></span></div>
+        <div class="memo-two-col">
+          <div class="memo-line"><strong>ที่</strong> <span data-print-field="documentNo"></span></div>
+          <div class="memo-line"><strong>วันที่</strong> <span data-print-field="documentDate"></span></div>
+        </div>
+        <div class="memo-line"><strong>เรื่อง</strong> <span>ขออนุญาตลงทะเบียนใช้งานระบบเครือข่ายกรมช่างอากาศ และเครือข่ายกองทัพอากาศ</span></div>
+        <p class="memo-recipient"><strong>เรียน</strong> เสธ.ชอ. (ผ่าน หก.กกม.บก.ชอ.)</p>
+
+        <div class="memo-body">
+          <p><span class="memo-indent">๑.</span> ด้วย กระผม/ดิฉัน <span class="memo-fill" data-print-field="fullname"></span></p>
+          <div class="memo-two-col">
+            <p>หมายเลขประจำตัว ทอ. <span class="memo-fill" data-print-field="airforceId"></span></p>
+            <p>หมายเลขบัตรประชาชน <span class="memo-fill" data-print-field="nationalId"></span></p>
+            <p>ตำแหน่ง <span class="memo-fill" data-print-field="position"></span></p>
+            <p>สังกัด <span class="memo-fill" data-print-field="affiliation"></span></p>
+            <p>หมายเลขโทรศัพท์ภายใน <span class="memo-fill" data-print-field="internalPhone"></span></p>
+            <p>หมายเลขโทรศัพท์ที่ติดต่อได้ <span class="memo-fill" data-print-field="phone"></span></p>
+            <p>เป็นเจ้าของ/ผู้ใช้อุปกรณ์ประเภท <span class="memo-fill" data-print-field="deviceType"></span></p>
+            <p>ยี่ห้อ/รุ่น <span class="memo-fill" data-print-field="deviceBrand"></span></p>
+          </div>
+          <p>หมายเลขประจำเครื่อง (MAC Address) <span class="memo-fill" data-print-field="macAddress"></span></p>
+          <p>มีความประสงค์จะขออนุญาตลงทะเบียนใช้งานระบบเครือข่ายกรมช่างอากาศ และเครือข่ายกองทัพอากาศ</p>
+          <p>บริเวณ <span class="memo-fill" data-print-field="location"></span></p>
+          <p><span class="memo-indent">๒.</span> กระผม/ดิฉันได้ทราบและเข้าใจเกี่ยวกับการกระทำความผิดตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. ๒๕๕๐ เป็นอย่างดีแล้ว ดังนั้น หากกระผม/ดิฉันได้กระทำความผิดตามพระราชบัญญัติดังกล่าว กระผม/ดิฉันจะขอรับผิดชอบตามความผิดที่ได้กระทำไว้ทุกประการ</p>
+          <p class="memo-closing">จึงเรียนมาเพื่อพิจารณาอนุญาต</p>
+        </div>
+
+        <div class="memo-signature applicant-signature">
+          <p>ลงชื่อ ...............................................................</p>
+          <p>(<span data-print-field="fullname"></span>)</p>
+        </div>
+        <div class="memo-approval">
+          <div><p>เรียน เสธ.ชอ.</p><p>เพื่อพิจารณาอนุญาต</p><br><p>น.อ.</p><p>หก.กกม.บก.ชอ.</p><p>........../........../..........</p></div>
+          <div><p>อนุญาต</p><br><p>พล.อ.ต.</p><p>เสธ.ชอ.</p><p>........../........../..........</p></div>
+        </div>
+        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ตัวอย่างเอกสารจะอัปเดตตามข้อมูลที่กรอก เมื่อพร้อมให้กด “ตรวจสอบและพิมพ์” ด้านบน</p>
+      </div>
+    </section>
+
     <!-- SECTION 1: Tickets List View (Visible in Tab 1 and Tab 2) -->
-    <div id="tickets-list-section" class="content-section">
+    <div id="tickets-list-section" class="content-section hidden">
+      <div class="subpage-toolbar repair-subpage-toolbar no-print">
+        <button id="repair-back-home" class="btn btn-secondary-outline" type="button">
+          <i class="fa-solid fa-arrow-left"></i> กลับหน้าเลือกบริการ
+        </button>
+        <div><span class="service-eyebrow"><i class="fa-solid fa-screwdriver-wrench"></i> งานบริการซ่อม</span><h2>ระบบแจ้งซ่อมอุปกรณ์ไอที</h2></div>
+      </div>
       <!-- Summary Cards (Visible in Tab 1 and Tab 2) -->
       <section class="summary-section">
         <div class="stat-card stat-pending">
@@ -663,13 +852,13 @@
   <footer class="app-footer">
     <div class="footer-container">
       <p>&copy; 2026 IT Service Department. พัฒนาขึ้นสำหรับระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์ภายในองค์กร (ต้นแบบ Static Web)</p>
-      <p class="footer-note">ข้อมูลจัดเก็บผ่าน Supabase และมี LocalStorage เป็นข้อมูลสำรองในเบราว์เซอร์</p>
+      <p class="footer-note">ข้อมูลแจ้งซ่อมจัดเก็บผ่าน Supabase ส่วนแบบร่างใบลงทะเบียนอินเทอร์เน็ตเก็บเฉพาะในเบราว์เซอร์เครื่องนี้</p>
     </div>
   </footer>
 
   <!-- Supabase loads after the HTML has been parsed. Chart.js is loaded only
        when an admin opens the analytics dashboard. -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="script.js"></script>
+  <script defer src="script.js?v=20260915-internet-registration"></script>
 </body>
 </html>

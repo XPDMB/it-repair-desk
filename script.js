@@ -259,6 +259,16 @@ const openNewTicketBtn = document.getElementById('open-new-ticket-btn');
 const adminModeBanner = document.getElementById('admin-mode-banner');
 const adminOverviewPanel = document.getElementById('admin-overview-panel');
 const ticketsListSection = document.getElementById('tickets-list-section');
+const serviceHomePanel = document.getElementById('service-home-panel');
+const internetRegistrationSection = document.getElementById('internet-registration-section');
+const chooseRepairServiceBtn = document.getElementById('choose-repair-service');
+const chooseInternetServiceBtn = document.getElementById('choose-internet-service');
+const repairBackHomeBtn = document.getElementById('repair-back-home');
+const internetBackHomeBtn = document.getElementById('internet-back-home');
+const internetRegistrationForm = document.getElementById('internet-registration-form');
+const internetPrintSheet = document.getElementById('internet-print-sheet');
+const clearInternetFormBtn = document.getElementById('clear-internet-form');
+const internetDraftStatus = document.getElementById('internet-draft-status');
 const adminLoginModal = document.getElementById('admin-login-modal');
 const adminLoginForm = document.getElementById('admin-login-form');
 const adminPasswordInput = document.getElementById('admin-password');
@@ -1047,16 +1057,24 @@ function setRoleMode(mode) {
   if (mode === 'user') {
     currentRole = 'user';
     tabUserBtn.classList.add('active');
-    ticketsListSection.classList.remove('hidden');
+    serviceHomePanel.classList.remove('hidden');
+    ticketsListSection.classList.add('hidden');
+    internetRegistrationSection.classList.add('hidden');
     adminOverviewPanel.classList.add('hidden');
     adminModeBanner.classList.add('hidden');
+    openNewTicketBtn.classList.add('hidden');
+    repairBackHomeBtn.classList.remove('hidden');
   } 
   else if (mode === 'admin-manage') {
     currentRole = 'admin';
     tabAdminBtn.classList.add('active');
+    serviceHomePanel.classList.add('hidden');
     ticketsListSection.classList.remove('hidden');
+    internetRegistrationSection.classList.add('hidden');
     adminOverviewPanel.classList.add('hidden');
     adminModeBanner.classList.remove('hidden');
+    openNewTicketBtn.classList.remove('hidden');
+    repairBackHomeBtn.classList.add('hidden');
     document.getElementById('admin-banner-text').innerHTML = `
       <strong>โหมดจัดการงานซ่อม (แอดมิน):</strong> คุณสามารถคลิกเปลี่ยนสถานะใต้การ์ด หรือกดแก้ไข/ลบข้อมูลได้โดยตรงที่ใบงานซ่อม
     `;
@@ -1064,9 +1082,12 @@ function setRoleMode(mode) {
   else if (mode === 'admin-dashboard') {
     currentRole = 'admin';
     tabDashboardBtn.classList.add('active');
+    serviceHomePanel.classList.add('hidden');
     ticketsListSection.classList.add('hidden');
+    internetRegistrationSection.classList.add('hidden');
     adminOverviewPanel.classList.remove('hidden');
     adminModeBanner.classList.remove('hidden');
+    openNewTicketBtn.classList.add('hidden');
     document.getElementById('admin-banner-text').innerHTML = `
       <strong>ภาพรวมแอดมิน:</strong> เลือกปีเพื่อดูสรุปผล และกดพิมพ์รายงานประจำปีได้
     `;
@@ -1078,6 +1099,99 @@ function setRoleMode(mode) {
   
   // Re-render matching current permissions view
   renderTickets();
+}
+
+// ----------------------------------------------------
+// 6.5 User service navigation and internet registration
+// ----------------------------------------------------
+const INTERNET_DRAFT_KEY = 'it_repair_desk_internet_registration_draft_v1';
+const internetFieldMap = {
+  agency: 'internet-agency',
+  documentNo: 'internet-document-no',
+  documentDate: 'internet-document-date',
+  fullname: 'internet-fullname',
+  airforceId: 'internet-airforce-id',
+  nationalId: 'internet-national-id',
+  position: 'internet-position',
+  affiliation: 'internet-affiliation',
+  internalPhone: 'internet-internal-phone',
+  phone: 'internet-phone',
+  deviceType: 'internet-device-type',
+  deviceBrand: 'internet-device-brand',
+  macAddress: 'internet-mac-address',
+  location: 'internet-location'
+};
+
+function formatThaiDocumentDate(value) {
+  if (!value) return '';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('th-TH', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  }).format(date);
+}
+
+function getInternetFormData() {
+  const data = {};
+  Object.entries(internetFieldMap).forEach(([key, id]) => {
+    data[key] = document.getElementById(id).value.trim();
+  });
+  data.consent = document.getElementById('internet-consent').checked;
+  return data;
+}
+
+function renderInternetPrintSheet() {
+  const data = getInternetFormData();
+  Object.keys(internetFieldMap).forEach((key) => {
+    const displayValue = key === 'documentDate' ? formatThaiDocumentDate(data[key]) : data[key];
+    internetPrintSheet.querySelectorAll(`[data-print-field="${key}"]`).forEach((element) => {
+      element.textContent = displayValue || ' ';
+    });
+  });
+}
+
+function saveInternetDraft() {
+  const data = getInternetFormData();
+  try {
+    localStorage.setItem(INTERNET_DRAFT_KEY, JSON.stringify(data));
+    internetDraftStatus.classList.add('saved');
+    window.clearTimeout(saveInternetDraft.statusTimer);
+    saveInternetDraft.statusTimer = window.setTimeout(() => internetDraftStatus.classList.remove('saved'), 1200);
+  } catch (error) {
+    console.warn('Could not save internet registration draft:', error);
+  }
+  renderInternetPrintSheet();
+}
+
+function loadInternetDraft() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(INTERNET_DRAFT_KEY) || '{}');
+    Object.entries(internetFieldMap).forEach(([key, id]) => {
+      if (typeof saved[key] === 'string') document.getElementById(id).value = saved[key];
+    });
+    document.getElementById('internet-consent').checked = Boolean(saved.consent);
+  } catch (error) {
+    console.warn('Could not load internet registration draft:', error);
+  }
+
+  const dateInput = document.getElementById('internet-document-date');
+  if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+  renderInternetPrintSheet();
+}
+
+function showUserService(service) {
+  if (isAdminLoggedIn) return;
+  serviceHomePanel.classList.toggle('hidden', service !== 'home');
+  ticketsListSection.classList.toggle('hidden', service !== 'repair');
+  internetRegistrationSection.classList.toggle('hidden', service !== 'internet');
+  adminOverviewPanel.classList.add('hidden');
+  adminModeBanner.classList.add('hidden');
+  openNewTicketBtn.classList.toggle('hidden', service !== 'repair');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function finishInternetPrint() {
+  document.body.classList.remove('printing-internet-form');
 }
 
 // ----------------------------------------------------
@@ -1252,14 +1366,44 @@ tabUserBtn.addEventListener('click', () => setRoleMode('user'));
 tabAdminBtn.addEventListener('click', () => setRoleMode('admin-manage'));
 tabDashboardBtn.addEventListener('click', () => setRoleMode('admin-dashboard'));
 
+chooseRepairServiceBtn.addEventListener('click', () => showUserService('repair'));
+chooseInternetServiceBtn.addEventListener('click', () => showUserService('internet'));
+repairBackHomeBtn.addEventListener('click', () => showUserService('home'));
+internetBackHomeBtn.addEventListener('click', () => showUserService('home'));
+
+internetRegistrationForm.addEventListener('input', saveInternetDraft);
+internetRegistrationForm.addEventListener('change', saveInternetDraft);
+internetRegistrationForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!internetRegistrationForm.reportValidity()) return;
+  saveInternetDraft();
+  document.body.classList.add('printing-internet-form');
+  window.setTimeout(() => window.print(), 60);
+  window.setTimeout(finishInternetPrint, 3000);
+});
+
+clearInternetFormBtn.addEventListener('click', () => {
+  if (!confirm('ต้องการล้างข้อมูลในใบลงทะเบียนอินเทอร์เน็ตทั้งหมดหรือไม่?')) return;
+  internetRegistrationForm.reset();
+  try {
+    localStorage.removeItem(INTERNET_DRAFT_KEY);
+  } catch (error) {
+    console.warn('Could not clear internet registration draft:', error);
+  }
+  document.getElementById('internet-document-date').value = new Date().toISOString().slice(0, 10);
+  renderInternetPrintSheet();
+});
+
+window.addEventListener('afterprint', finishInternetPrint);
+
 reportYearSelect.addEventListener('change', refreshAdminDashboard);
 
 printReportBtn.addEventListener('click', () => {
   if (!requireAdmin()) return;
   renderDashboardCharts();
   document.body.classList.add('printing-yearly-report');
-  window.print();
-  document.body.classList.remove('printing-yearly-report');
+  window.setTimeout(() => window.print(), 60);
+  window.setTimeout(() => document.body.classList.remove('printing-yearly-report'), 3000);
 });
 
 // Login & Logout switches
@@ -1788,6 +1932,7 @@ editTicketForm.addEventListener('submit', async function(e) {
 // ----------------------------------------------------
 async function initApp() {
   // Paint cached text data immediately, then refresh from Supabase in the background.
+  loadInternetDraft();
   updateStatistics();
   setRoleMode(isAdminLoggedIn ? 'admin-manage' : 'user');
 
