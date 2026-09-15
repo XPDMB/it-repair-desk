@@ -57,7 +57,7 @@
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=20260915-exact-form">
+  <link rel="stylesheet" href="styles.css?v=20260915-print-preview">
 </head>
 <body>
 
@@ -154,7 +154,7 @@
       </div>
 
       <div class="internet-workspace no-print">
-        <form id="internet-registration-form" class="internet-form-card">
+        <form id="internet-registration-form" class="internet-form-card" novalidate>
           <div class="form-section-heading">
             <span>1</span>
             <div><strong>ข้อมูลหนังสือ</strong><small>ส่วนราชการ เลขที่หนังสือ และวันที่</small></div>
@@ -246,9 +246,24 @@
           <div class="internet-form-actions">
             <span id="internet-draft-status" class="draft-status"><i class="fa-solid fa-circle-check"></i> บันทึกร่างอัตโนมัติในเครื่องนี้</span>
             <button id="clear-internet-form" class="btn btn-secondary-outline" type="button"><i class="fa-solid fa-eraser"></i> ล้างข้อมูล</button>
-            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-print"></i> ตรวจสอบและพิมพ์</button>
+            <button id="review-internet-print-btn" class="btn btn-primary" type="submit"><i class="fa-solid fa-file-magnifying-glass"></i> ตรวจสอบก่อนพิมพ์</button>
           </div>
         </form>
+      </div>
+
+      <div id="internet-print-toolbar" class="internet-print-toolbar no-print hidden" role="status">
+        <div class="internet-print-toolbar-copy">
+          <span class="internet-print-toolbar-icon"><i class="fa-solid fa-file-circle-check"></i></span>
+          <div>
+            <strong>ตรวจสอบใบลงทะเบียนก่อนพิมพ์</strong>
+            <p id="internet-print-validation-note">ตรวจสอบข้อมูลในเอกสารด้านล่าง แล้วกด “พิมพ์เอกสาร”</p>
+            <small><i class="fa-solid fa-circle-info"></i> หากหน้าต่างพิมพ์ไม่เปิด ให้กด <kbd>Ctrl</kbd> + <kbd>P</kbd> หรือเลือกเมนูพิมพ์ของเบราว์เซอร์</small>
+          </div>
+        </div>
+        <div class="internet-print-toolbar-actions">
+          <button id="edit-internet-form-btn" class="btn btn-secondary-outline" type="button"><i class="fa-solid fa-pen"></i> กลับไปแก้ไข</button>
+          <button id="print-internet-now-btn" class="btn btn-primary" type="button"><i class="fa-solid fa-print"></i> พิมพ์เอกสาร</button>
+        </div>
       </div>
 
       <div id="internet-print-sheet" class="internet-print-sheet" aria-label="ตัวอย่างใบลงทะเบียนอินเทอร์เน็ต">
@@ -303,7 +318,7 @@
             <p>........../........../..........</p>
           </div>
         </div>
-        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ตัวอย่างเอกสารจะอัปเดตตามข้อมูลที่กรอก เมื่อพร้อมให้กด “ตรวจสอบและพิมพ์” ด้านบน</p>
+        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ตัวอย่างเอกสารจะอัปเดตตามข้อมูลที่กรอก เมื่อพร้อมให้กด “ตรวจสอบก่อนพิมพ์” ด้านบน</p>
       </div>
     </section>
 
@@ -874,6 +889,6 @@
   <!-- Supabase loads after the HTML has been parsed. Chart.js is loaded only
        when an admin opens the analytics dashboard. -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="script.js?v=20260915-internet-registration"></script>
+  <script defer src="script.js?v=20260915-print-preview"></script>
 </body>
 </html>

@@ -267,6 +267,11 @@ const repairBackHomeBtn = document.getElementById('repair-back-home');
 const internetBackHomeBtn = document.getElementById('internet-back-home');
 const internetRegistrationForm = document.getElementById('internet-registration-form');
 const internetPrintSheet = document.getElementById('internet-print-sheet');
+const internetWorkspace = document.querySelector('.internet-workspace');
+const internetPrintToolbar = document.getElementById('internet-print-toolbar');
+const internetPrintValidationNote = document.getElementById('internet-print-validation-note');
+const editInternetFormBtn = document.getElementById('edit-internet-form-btn');
+const printInternetNowBtn = document.getElementById('print-internet-now-btn');
 const clearInternetFormBtn = document.getElementById('clear-internet-form');
 const internetDraftStatus = document.getElementById('internet-draft-status');
 const adminLoginModal = document.getElementById('admin-login-modal');
@@ -1181,6 +1186,7 @@ function loadInternetDraft() {
 
 function showUserService(service) {
   if (isAdminLoggedIn) return;
+  exitInternetPrintPreview();
   serviceHomePanel.classList.toggle('hidden', service !== 'home');
   ticketsListSection.classList.toggle('hidden', service !== 'repair');
   internetRegistrationSection.classList.toggle('hidden', service !== 'internet');
@@ -1192,6 +1198,37 @@ function showUserService(service) {
 
 function finishInternetPrint() {
   document.body.classList.remove('printing-internet-form');
+}
+
+function getMissingInternetFields() {
+  return Array.from(internetRegistrationForm.elements)
+    .filter((field) => field.required && !field.checkValidity())
+    .map((field) => {
+      const label = internetRegistrationForm.querySelector(`label[for="${field.id}"]`);
+      if (field.id === 'internet-consent') return 'การยืนยันรับทราบเงื่อนไข';
+      return label ? label.textContent.replace('*', '').trim() : 'ข้อมูลที่จำเป็น';
+    });
+}
+
+function enterInternetPrintPreview() {
+  saveInternetDraft();
+  const missingFields = getMissingInternetFields();
+  internetPrintValidationNote.textContent = missingFields.length
+    ? `ยังไม่ได้กรอก ${missingFields.length} รายการ: ${missingFields.join(', ')} — สามารถกลับไปกรอกเพิ่ม หรือพิมพ์แบบฟอร์มเปล่าได้`
+    : 'ข้อมูลที่จำเป็นครบแล้ว ตรวจสอบเอกสารด้านล่างก่อนสั่งพิมพ์';
+  internetPrintValidationNote.classList.toggle('has-warning', missingFields.length > 0);
+  internetWorkspace.classList.add('hidden');
+  internetPrintToolbar.classList.remove('hidden');
+  document.body.classList.add('internet-print-preview-mode');
+  internetPrintToolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitInternetPrintPreview() {
+  if (!internetWorkspace || !internetPrintToolbar) return;
+  internetWorkspace.classList.remove('hidden');
+  internetPrintToolbar.classList.add('hidden');
+  document.body.classList.remove('internet-print-preview-mode');
+  finishInternetPrint();
 }
 
 // ----------------------------------------------------
@@ -1375,8 +1412,15 @@ internetRegistrationForm.addEventListener('input', saveInternetDraft);
 internetRegistrationForm.addEventListener('change', saveInternetDraft);
 internetRegistrationForm.addEventListener('submit', (event) => {
   event.preventDefault();
-  if (!internetRegistrationForm.reportValidity()) return;
-  saveInternetDraft();
+  enterInternetPrintPreview();
+});
+
+editInternetFormBtn.addEventListener('click', () => {
+  exitInternetPrintPreview();
+  internetRegistrationForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+printInternetNowBtn.addEventListener('click', () => {
   document.body.classList.add('printing-internet-form');
   window.setTimeout(() => window.print(), 60);
   window.setTimeout(finishInternetPrint, 3000);
