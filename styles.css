@@ -3334,6 +3334,41 @@ svg {
 .template-legal-name { top: 43.15%; left: 52%; width: 34.5%; }
 .template-signature-name { top: 57.05%; left: 52.5%; width: 25%; }
 
+/* The supplied Word document is the print authority. Keep the web preview
+   editable and typographic, with the same A4 margins and dotted entry lines. */
+.internet-print-sheet {
+  width: min(100%, 210mm);
+  min-height: 297mm;
+  margin: 1.5rem auto;
+  padding: 19mm 25mm 18mm 27mm;
+  border: 1px solid #d7dde7;
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  color: #111;
+  font-family: 'TH SarabunPSK', 'TH Sarabun New', 'Sarabun', Tahoma, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.32;
+}
+
+.internet-print-sheet .memo-fill,
+.internet-print-sheet .memo-inline-fill,
+.internet-print-sheet .memo-line > span {
+  color: #111;
+  border-bottom: 1.2px dotted #333;
+}
+
+.internet-print-sheet .memo-fill:not(:empty),
+.internet-print-sheet .memo-inline-fill:not(:empty),
+.internet-print-sheet .memo-line > span:not(:empty) {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.internet-print-help {
+  margin-left: -27mm;
+  margin-right: -25mm;
+}
+
 @media (max-width: 768px) {
   .service-choice-grid,
   .internet-form-grid,
@@ -3435,7 +3470,7 @@ svg {
     width: 100%;
     min-height: auto;
     margin: 0;
-    padding: 0;
+    padding: 19mm 25mm 18mm 27mm;
     border: 0;
     box-shadow: none;
     page: internet-form;
@@ -3445,6 +3480,10 @@ svg {
     width: 210mm;
     height: auto;
     aspect-ratio: 817 / 1119;
+  }
+
+  body.printing-internet-form .internet-print-help {
+    display: none !important;
   }
 
   body.printing-internet-form .memo-title {

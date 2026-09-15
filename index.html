@@ -57,7 +57,7 @@
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=20260915-scanned-template">
+  <link rel="stylesheet" href="styles.css?v=20260915-word-layout">
 </head>
 <body>
 
@@ -267,26 +267,46 @@
       </div>
 
       <div id="internet-print-sheet" class="internet-print-sheet" aria-label="ตัวอย่างใบลงทะเบียนอินเทอร์เน็ต">
-        <div class="internet-template-page">
-          <img src="internet-registration-form-template.png" alt="แบบฟอร์มบันทึกข้อความขออนุญาตลงทะเบียนใช้งานระบบเครือข่าย">
-          <span class="template-value template-agency" data-print-field="agency"></span>
-          <span class="template-value template-document-no" data-print-field="documentNo"></span>
-          <span class="template-value template-document-date" data-print-field="documentDate"></span>
-          <span class="template-value template-fullname" data-print-field="fullname"></span>
-          <span class="template-value template-airforce-id" data-print-field="airforceId"></span>
-          <span class="template-value template-national-id" data-print-field="nationalId"></span>
-          <span class="template-value template-position" data-print-field="position"></span>
-          <span class="template-value template-affiliation" data-print-field="affiliation"></span>
-          <span class="template-value template-internal-phone" data-print-field="internalPhone"></span>
-          <span class="template-value template-phone" data-print-field="phone"></span>
-          <span class="template-value template-device-type" data-print-field="deviceType"></span>
-          <span class="template-value template-device-brand" data-print-field="deviceBrand"></span>
-          <span class="template-value template-mac-address" data-print-field="macAddress"></span>
-          <span class="template-value template-location" data-print-field="location"></span>
-          <span class="template-value template-legal-name" data-print-field="fullname"></span>
-          <span class="template-value template-signature-name" data-print-field="fullname"></span>
+        <div class="memo-title">บันทึกข้อความ</div>
+        <div class="memo-header-block">
+          <div class="memo-line"><strong>ส่วนราชการ</strong><span data-print-field="agency"></span></div>
+          <div class="memo-line memo-document-row"><strong>ที่</strong><span data-print-field="documentNo"></span><strong>วันที่</strong><span data-print-field="documentDate"></span></div>
+          <div class="memo-line memo-subject-line"><strong>เรื่อง</strong><span>ขออนุญาตลงทะเบียนใช้งานระบบเครือข่ายกรมช่างอากาศ และเครือข่ายกองทัพอากาศ</span></div>
         </div>
-        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ใช้ใบต้นฉบับที่แนบมาเป็นแม่แบบโดยตรง ข้อมูลที่กรอกจะวางลงในช่องว่างของเอกสาร</p>
+        <div class="memo-recipient"><strong>เรียน</strong>&nbsp;&nbsp;เสธ.ชอ. (ผ่าน หก.กกม.บก.ชอ.)</div>
+        <div class="memo-body">
+          <p class="memo-field-row memo-first-line">๑. ด้วย กระผม/ดิฉัน <span class="memo-fill" data-print-field="fullname"></span> หมายเลขประจำตัว ทอ. <span class="memo-fill" data-print-field="airforceId"></span></p>
+          <p class="memo-field-row memo-detail-grid"><span class="memo-fill" data-print-field="nationalId"></span> ตำแหน่ง <span class="memo-fill" data-print-field="position"></span></p>
+          <p class="memo-field-row memo-detail-grid">สังกัด <span class="memo-fill" data-print-field="affiliation"></span> หมายเลขโทรศัพท์ภายใน <span class="memo-fill" data-print-field="internalPhone"></span> โทรศัพท์ที่ติดต่อได้ <span class="memo-fill" data-print-field="phone"></span></p>
+          <p class="memo-field-row memo-detail-grid">เป็นเจ้าของ/ผู้ใช้อุปกรณ์ประเภท <span class="memo-fill" data-print-field="deviceType"></span> ยี่ห้อเครื่อง <span class="memo-fill" data-print-field="deviceBrand"></span></p>
+          <p class="memo-field-row">หมายเลขประจำเครื่อง (Mac Address) <span class="memo-fill" data-print-field="macAddress"></span></p>
+          <p class="memo-request-text">มีความประสงค์จะขออนุญาตลงทะเบียนใช้งานระบบเครือข่ายกรมช่างอากาศ และเครือข่ายกองทัพอากาศ</p>
+          <p class="memo-field-row">บริเวณ <span class="memo-fill" data-print-field="location"></span></p>
+          <p class="memo-law-paragraph">๒. กระผม/ดิฉัน ได้รับทราบและเข้าใจเกี่ยวกับการกระทำความผิดตามพระราชบัญญัติว่าด้วยการกระทำผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ.๒๕๕๐ เป็นอย่างดีแล้ว ดังนั้น หากกระผม/ดิฉันได้กระทำความผิดตามพระราชบัญญัติดังกล่าว กระผม/ดิฉัน <span class="memo-inline-fill" data-print-field="fullname"></span> จะขอรับผิดชอบตามความผิดที่ได้กระทำไว้ทุกประการ</p>
+          <p class="memo-closing">จึงเรียนมาเพื่อพิจารณาอนุญาต</p>
+        </div>
+        <div class="memo-signature">
+          <div>ลงชื่อ..............................................</div>
+          <div>(<span class="memo-inline-fill" data-print-field="fullname"></span>)</div>
+        </div>
+        <div class="memo-approval-flow">
+          <div class="memo-approval-block">
+            <p class="approval-lead">เรียน&nbsp;&nbsp;เสธ.ชอ.</p>
+            <p>เพื่อพิจารณาอนุญาต</p>
+            <div class="approval-signature-space"></div>
+            <p>น.อ.</p>
+            <p>หก.กกม.บก.ชอ.</p>
+            <p>................../................../..................</p>
+          </div>
+          <div class="memo-approval-block memo-final-approval">
+            <p class="approval-lead">อนุญาต</p>
+            <div class="approval-signature-space"></div>
+            <p>พล.อ.ต.</p>
+            <p>เสธ.ชอ.</p>
+            <p>................../................../..................</p>
+          </div>
+        </div>
+        <p class="internet-print-help no-print"><i class="fa-solid fa-circle-info"></i> ข้อมูลที่กรอกจะจัดวางตามต้นแบบ Word และพร้อมพิมพ์เป็นเอกสาร A4</p>
       </div>
     </section>
 
@@ -857,6 +877,6 @@
   <!-- Supabase loads after the HTML has been parsed. Chart.js is loaded only
        when an admin opens the analytics dashboard. -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="script.js?v=20260915-print-preview"></script>
+  <script defer src="script.js?v=20260915-word-layout"></script>
 </body>
 </html>
