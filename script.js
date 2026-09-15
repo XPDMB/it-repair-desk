@@ -274,6 +274,9 @@ const editInternetFormBtn = document.getElementById('edit-internet-form-btn');
 const printInternetNowBtn = document.getElementById('print-internet-now-btn');
 const clearInternetFormBtn = document.getElementById('clear-internet-form');
 const internetDraftStatus = document.getElementById('internet-draft-status');
+const adminInternetRegistrations = document.getElementById('admin-internet-registrations');
+const adminInternetList = document.getElementById('admin-internet-list');
+const printAdminInternetBtn = document.getElementById('print-admin-internet-btn');
 const adminLoginModal = document.getElementById('admin-login-modal');
 const adminLoginForm = document.getElementById('admin-login-form');
 const adminPasswordInput = document.getElementById('admin-password');
@@ -1069,6 +1072,7 @@ function setRoleMode(mode) {
     adminModeBanner.classList.add('hidden');
     openNewTicketBtn.classList.add('hidden');
     repairBackHomeBtn.classList.remove('hidden');
+    adminInternetRegistrations?.classList.add('hidden');
   } 
   else if (mode === 'admin-manage') {
     currentRole = 'admin';
@@ -1080,6 +1084,8 @@ function setRoleMode(mode) {
     adminModeBanner.classList.remove('hidden');
     openNewTicketBtn.classList.remove('hidden');
     repairBackHomeBtn.classList.add('hidden');
+    adminInternetRegistrations?.classList.remove('hidden');
+    renderAdminInternetRegistrations();
     document.getElementById('admin-banner-text').innerHTML = `
       <strong>โหมดจัดการงานซ่อม (แอดมิน):</strong> คุณสามารถคลิกเปลี่ยนสถานะใต้การ์ด หรือกดแก้ไข/ลบข้อมูลได้โดยตรงที่ใบงานซ่อม
     `;
@@ -1093,6 +1099,7 @@ function setRoleMode(mode) {
     adminOverviewPanel.classList.remove('hidden');
     adminModeBanner.classList.remove('hidden');
     openNewTicketBtn.classList.add('hidden');
+    adminInternetRegistrations?.classList.add('hidden');
     document.getElementById('admin-banner-text').innerHTML = `
       <strong>ภาพรวมแอดมิน:</strong> เลือกปีเพื่อดูสรุปผล และกดพิมพ์รายงานประจำปีได้
     `;
@@ -1110,6 +1117,7 @@ function setRoleMode(mode) {
 // 6.5 User service navigation and internet registration
 // ----------------------------------------------------
 const INTERNET_DRAFT_KEY = 'it_repair_desk_internet_registration_draft_v1';
+const INTERNET_SUBMISSIONS_KEY = 'it_repair_desk_internet_registration_submissions_v1';
 const internetFieldMap = {
   agency: 'internet-agency',
   documentNo: 'internet-document-no',
@@ -1143,6 +1151,24 @@ function getInternetFormData() {
   });
   data.consent = document.getElementById('internet-consent').checked;
   return data;
+}
+
+function getInternetSubmissions() {
+  try { return JSON.parse(localStorage.getItem(INTERNET_SUBMISSIONS_KEY) || '[]'); } catch { return []; }
+}
+
+function saveInternetSubmission() {
+  const data = getInternetFormData();
+  const submissions = getInternetSubmissions();
+  submissions.unshift({ ...data, id: `NET-${Date.now().toString(36).toUpperCase()}`, submittedAt: new Date().toISOString(), status: 'รอดำเนินการ' });
+  localStorage.setItem(INTERNET_SUBMISSIONS_KEY, JSON.stringify(submissions));
+  return submissions[0];
+}
+
+function renderAdminInternetRegistrations() {
+  if (!adminInternetList) return;
+  const submissions = getInternetSubmissions();
+  adminInternetList.innerHTML = submissions.length ? submissions.map((item, index) => `<label class="admin-internet-row"><input type="radio" name="admin-internet-selection" value="${index}" ${index === 0 ? 'checked' : ''}><span><strong>${item.fullname || 'ไม่ระบุชื่อ'}</strong><small>${item.id} · ${item.deviceType || 'ไม่ระบุอุปกรณ์'} · ${item.status}</small></span><time>${new Date(item.submittedAt).toLocaleString('th-TH')}</time></label>`).join('') : '<p class="empty-state">ยังไม่มีใบลงทะเบียนที่ส่งเข้ามา</p>';
 }
 
 function renderInternetPrintSheet() {
@@ -1412,6 +1438,12 @@ internetRegistrationForm.addEventListener('input', saveInternetDraft);
 internetRegistrationForm.addEventListener('change', saveInternetDraft);
 internetRegistrationForm.addEventListener('submit', (event) => {
   event.preventDefault();
+  if (!internetRegistrationForm.checkValidity()) {
+    internetRegistrationForm.reportValidity();
+    enterInternetPrintPreview();
+    return;
+  }
+  saveInternetSubmission();
   enterInternetPrintPreview();
 });
 
@@ -1421,7 +1453,28 @@ editInternetFormBtn.addEventListener('click', () => {
 });
 
 printInternetNowBtn.addEventListener('click', () => {
-  document.body.classList.add('printing-internet-form');
+  if (isAdminLoggedIn) {
+    document.body.classList.add('printing-internet-form');
+    window.setTimeout(() => window.print(), 60);
+    window.setTimeout(finishInternetPrint, 3000);
+  } else {
+    alert('ส่งข้อมูลให้เจ้าหน้าที่แล้ว เจ้าหน้าที่จะเป็นผู้พิมพ์ใบลงทะเบียนให้ครับ');
+    showUserService('home');
+  }
+});
+
+printAdminInternetBtn?.addEventListener('click', () => {
+  const selected = document.querySelector('input[name="admin-internet-selection"]:checked');
+  if (!selected) { alert('กรุณาเลือกใบลงทะเบียนก่อนพิมพ์'); return; }
+  const item = getInternetSubmissions()[Number(selected.value)];
+  if (!item) return;
+  Object.entries(internetFieldMap).forEach(([key, id]) => { const field = document.getElementById(id); if (field) field.value = item[key] || ''; });
+  document.getElementById('internet-consent').checked = Boolean(item.consent);
+  renderInternetPrintSheet();
+  internetRegistrationSection.classList.remove('hidden');
+  internetWorkspace.classList.add('hidden');
+  internetPrintToolbar.classList.remove('hidden');
+  document.body.classList.add('internet-print-preview-mode', 'printing-internet-form');
   window.setTimeout(() => window.print(), 60);
   window.setTimeout(finishInternetPrint, 3000);
 });

@@ -3524,3 +3524,9 @@ svg {
     transition-duration: 0.01ms !important;
   }
 }
+/* Internet registration queue for staff */
+.admin-internet-registrations { margin: 1.5rem auto; max-width: 1200px; }
+.admin-internet-list { display:grid; gap:.65rem; }
+.admin-internet-row { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; border:1px solid var(--border-color,#d7dde7); border-radius:14px; background:#fff; cursor:pointer; }
+.admin-internet-row span { display:grid; gap:.2rem; flex:1; }
+.admin-internet-row small, .admin-internet-row time { color:#64748b; font-size:.9rem; }
