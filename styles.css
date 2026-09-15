@@ -3534,6 +3534,9 @@ svg {
 .internet-service-card, #internet-registration-section, #admin-internet-registrations { display:none !important; }
 .service-choice-grid { grid-template-columns: minmax(280px, 520px); justify-content:center; }
 .service-privacy-note { display:none !important; }
+.service-home-panel .service-choice-grid { display:flex !important; justify-content:center !important; align-items:center; }
+.service-home-panel .service-choice-card { width:min(100%, 520px) !important; flex:0 1 520px; }
+.service-home-panel .service-privacy-note { display:none !important; }
 .jp-template-overlay { position:relative; width:100%; line-height:1; }
 .jp-template-overlay > img { display:block; width:100%; height:auto; }
 .jp-value { position:absolute; color:#111; font-family:'TH Sarabun New','TH SarabunPSK',Sarabun,Tahoma,sans-serif; font-size:3.1%; font-weight:600; white-space:nowrap; }
