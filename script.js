@@ -149,7 +149,7 @@ if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY &&
 
 // Function to fetch tickets from Supabase DB
 async function fetchTicketsFromSupabase() {
-  if (!useSupabase || !supabaseClient) return;
+  if (!useSupabase || !supabaseClient) return false;
   try {
     const { data, error } = await supabaseClient
       .from('tickets')
@@ -181,8 +181,10 @@ async function fetchTicketsFromSupabase() {
       }));
       console.log("Loaded tickets from Supabase:", tickets.length);
     }
+    return true;
   } catch (e) {
     console.error("Failed to fetch tickets from Supabase:", e);
+    return false;
   }
 }
 
@@ -1030,6 +1032,13 @@ function saveStateAndRender() {
     populateReportYearOptions();
     refreshAdminDashboard();
   }
+}
+
+function setDataSyncStatus(message = '') {
+  const status = document.getElementById('data-sync-status');
+  if (!status) return;
+  status.textContent = message;
+  status.classList.toggle('hidden', !message);
 }
 
 function updateTabVisibility() {
@@ -2034,8 +2043,13 @@ async function initApp() {
   setRoleMode(isAdminLoggedIn ? 'admin-manage' : 'user');
 
   if (useSupabase && supabaseClient) {
-    await fetchTicketsFromSupabase();
+    const synced = await fetchTicketsFromSupabase();
     saveStateAndRender();
+    if (!synced) {
+      setDataSyncStatus('ไม่สามารถดึงรายการล่าสุดจากฐานข้อมูลได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้าอีกครั้ง');
+    }
+  } else {
+    setDataSyncStatus('เว็บไซต์กำลังใช้ข้อมูลในอุปกรณ์นี้ จึงไม่สามารถแสดงรายการร่วมกับอุปกรณ์เครื่องอื่นได้');
   }
 }
 

@@ -57,7 +57,7 @@
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=20260915-word-layout">
+  <link rel="stylesheet" href="styles.css?v=20260924-mobile-sync">
 </head>
 <body>
 
@@ -408,6 +408,7 @@
           <h2 class="section-title">ระบบแจ้งซ่อมคอมพิวเตอร์ภายในหน่วยงาน</h2>
           <span id="ticket-results-count" class="results-badge">พบ 0 รายการ</span>
         </div>
+        <div id="data-sync-status" class="data-sync-status hidden" role="status" aria-live="polite"></div>
         
         <!-- Grid list of tickets -->
         <div id="tickets-container" class="tickets-grid">
@@ -884,6 +885,6 @@
   <!-- Supabase loads after the HTML has been parsed. Chart.js is loaded only
        when an admin opens the analytics dashboard. -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="script.js?v=20260915-word-layout"></script>
+  <script defer src="script.js?v=20260924-mobile-sync"></script>
 </body>
 </html>

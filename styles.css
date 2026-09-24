@@ -880,6 +880,21 @@ body {
   display: none !important;
 }
 
+.data-sync-status {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #fbbf24;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.data-sync-status.hidden {
+  display: none;
+}
+
 .empty-icon {
   font-size: 3.5rem;
   color: #cbd5e1;
