@@ -1,6 +1,9 @@
 const required = ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','LINE_CHANNEL_ACCESS_TOKEN','LINE_TARGET_ID'];
 const missing = required.filter((name) => !process.env[name]);
-if (missing.length) throw new Error(`Missing required secrets: ${missing.join(', ')}`);
+if (missing.length) {
+  console.log(`LINE reminder skipped. Configure repository secrets: ${missing.join(', ')}`);
+  process.exit(0);
+}
 
 const supabaseUrl = process.env.SUPABASE_URL.replace(/\/$/, '');
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
