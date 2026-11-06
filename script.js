@@ -312,6 +312,7 @@ const resetFilterBtn = document.getElementById('reset-filter-btn');
 // Lists and Grids Containers
 const ticketsContainer = document.getElementById('tickets-container');
 const emptyState = document.getElementById('empty-state');
+const repairTicketPrintSheet = document.getElementById('repair-ticket-print-sheet');
 
 // Form Modals Elements
 const newTicketModal = document.getElementById('new-ticket-modal');
@@ -460,6 +461,79 @@ function formatDateThai(dateStr) {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${day} ${month} ${yearBE} ${hours}:${minutes}`;
+}
+
+function renderRepairTicketPrintSheet(ticket) {
+  if (!repairTicketPrintSheet) return;
+  const statusLabel = getStatusLabel(ticket.status);
+  const repairResult = ticket.repairResult || 'ยังไม่มีผลการดำเนินงาน';
+  const assignee = ticket.assignee || 'ยังไม่ได้มอบหมาย';
+  repairTicketPrintSheet.innerHTML = `
+    <div class="repair-print-document">
+      <header class="repair-print-header">
+        <div class="repair-print-logo"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div>
+          <p>ระบบแจ้งซ่อมอุปกรณ์คอมพิวเตอร์และไอที</p>
+          <h1>ใบแจ้งซ่อม</h1>
+        </div>
+        <div class="repair-print-number">
+          <span>เลขที่ใบงาน</span>
+          <strong>${escapeHtml(ticket.id)}</strong>
+        </div>
+      </header>
+      <div class="repair-print-status-row">
+        <span>วันที่รับแจ้ง <strong>${escapeHtml(formatDateThai(ticket.date))}</strong></span>
+        <span>สถานะ <strong>${escapeHtml(statusLabel)}</strong></span>
+        <span>ความเร่งด่วน <strong>${escapeHtml(ticket.priority || 'ปกติ')}</strong></span>
+      </div>
+      <section class="repair-print-section">
+        <h2>ข้อมูลผู้แจ้ง</h2>
+        <div class="repair-print-grid">
+          <div><span>ชื่อผู้แจ้ง</span><strong>${escapeHtml(ticket.reporter)}</strong></div>
+          <div><span>หน่วยงาน/แผนก</span><strong>${escapeHtml(ticket.dept)}</strong></div>
+          <div><span>เบอร์โทรศัพท์</span><strong>${escapeHtml(ticket.phone || '-')}</strong></div>
+        </div>
+      </section>
+      <section class="repair-print-section">
+        <h2>ข้อมูลอุปกรณ์และอาการเสีย</h2>
+        <div class="repair-print-grid repair-print-grid-two">
+          <div><span>ประเภทอุปกรณ์</span><strong>${escapeHtml(ticket.deviceType)}</strong></div>
+          <div><span>ยี่ห้อ/รุ่น/หมายเลขเครื่อง</span><strong>${escapeHtml(ticket.model)}</strong></div>
+        </div>
+        <div class="repair-print-detail"><span>รายละเอียดปัญหา</span><p>${escapeHtml(ticket.detail || ticket.subject || '-')}</p></div>
+      </section>
+      <section class="repair-print-section">
+        <h2>ผลการดำเนินงาน</h2>
+        <div class="repair-print-grid repair-print-grid-two">
+          <div><span>ช่างผู้รับผิดชอบ</span><strong>${escapeHtml(assignee)}</strong></div>
+          <div><span>สถานะปัจจุบัน</span><strong>${escapeHtml(statusLabel)}</strong></div>
+        </div>
+        <div class="repair-print-detail"><span>ผลการซ่อม/หมายเหตุ</span><p>${escapeHtml(repairResult)}</p></div>
+      </section>
+      <footer class="repair-print-signatures">
+        <div>ลงชื่อ ................................................ ผู้แจ้งซ่อม<br><small>(................................................)</small></div>
+        <div>ลงชื่อ ................................................ เจ้าหน้าที่<br><small>(................................................)</small></div>
+      </footer>
+      <p class="repair-print-generated">พิมพ์จากระบบ IT Repair Desk เมื่อ ${escapeHtml(new Date().toLocaleString('th-TH'))}</p>
+    </div>
+  `;
+}
+
+function finishRepairTicketPrint() {
+  document.body.classList.remove('printing-repair-ticket');
+  if (repairTicketPrintSheet) repairTicketPrintSheet.innerHTML = '';
+}
+
+function printRepairTicket(ticketId) {
+  const ticket = tickets.find(item => item.id === ticketId);
+  if (!ticket) {
+    alert('ไม่พบข้อมูลใบแจ้งซ่อมที่ต้องการพิมพ์');
+    return;
+  }
+  renderRepairTicketPrintSheet(ticket);
+  document.body.classList.add('printing-repair-ticket');
+  window.setTimeout(() => window.print(), 60);
+  window.setTimeout(finishRepairTicketPrint, 3000);
 }
 
 // Open / Close Modal animations helper
@@ -690,10 +764,15 @@ function renderTickets() {
           <button type="button" class="status-btn-option ${activeProcessingClass}" data-next-status="processing" ${statusActionAttributes}>กำลังซ่อม</button>
           <button type="button" class="status-btn-option ${activeCompletedClass}" data-next-status="completed" ${statusActionAttributes}>เสร็จแล้ว</button>
         </div>
+        <button type="button" class="ticket-print-btn" data-action="print-ticket">
+          <i class="fa-solid fa-print" aria-hidden="true"></i>
+          พิมพ์ใบแจ้งซ่อม
+        </button>
       `;
 
       card.querySelector('[data-action="edit"]')?.addEventListener('click', () => openEditModal(t.id));
       card.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteTicket(t.id));
+      card.querySelector('[data-action="print-ticket"]')?.addEventListener('click', () => printRepairTicket(t.id));
 
       const beforeImageButton = card.querySelector('[data-image-slot="before"]');
       if (beforeImageButton) {
@@ -1501,6 +1580,7 @@ clearInternetFormBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('afterprint', finishInternetPrint);
+window.addEventListener('afterprint', finishRepairTicketPrint);
 
 reportYearSelect.addEventListener('change', refreshAdminDashboard);
 
@@ -1729,11 +1809,19 @@ searchInput.addEventListener('input', renderTickets);
 filterDevice.addEventListener('change', renderTickets);
 filterStatus.addEventListener('change', renderTickets);
 
-resetFilterBtn.addEventListener('click', () => {
+function resetTicketFilters() {
   searchInput.value = '';
-  filterDevice.value = 'all';
-  filterStatus.value = 'all';
-  renderTickets();
+  filterDevice.value = Array.from(filterDevice.options).some(option => option.value === 'all') ? 'all' : filterDevice.options[0]?.value;
+  filterStatus.value = Array.from(filterStatus.options).some(option => option.value === 'all') ? 'all' : filterStatus.options[0]?.value;
+  searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  filterDevice.dispatchEvent(new Event('change', { bubbles: true }));
+  filterStatus.dispatchEvent(new Event('change', { bubbles: true }));
+  searchInput.focus({ preventScroll: true });
+}
+
+resetFilterBtn.addEventListener('click', (event) => {
+  event.preventDefault();
+  resetTicketFilters();
 });
 
 // ----------------------------------------------------
