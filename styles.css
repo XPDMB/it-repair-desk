@@ -3559,3 +3559,89 @@ svg {
 .internet-print-sheet > :not(.jp-template-overlay) { display:none !important; }
 .internet-print-sheet { padding:0 !important; border:0 !important; box-shadow:none !important; font-size:inherit !important; }
 .jp-agency{left:20%;top:11.55%}.jp-docno{left:16%;top:14.45%}.jp-date{left:51%;top:14.45%}.jp-name{left:39%;top:23.8%}.jp-airforce{left:79%;top:23.8%}.jp-national{left:27%;top:26.9%}.jp-position{left:40%;top:26.9%}.jp-affiliation{left:20%;top:29.8%}.jp-internal{left:51%;top:29.8%}.jp-phone{left:80%;top:29.8%}.jp-device{left:38%;top:32.9%}.jp-brand{left:70%;top:32.9%}.jp-mac{left:44%;top:36.1%}.jp-location{left:21%;top:42.2%}
+
+
+/* Individual repair ticket printing */
+.ticket-print-btn {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #c7d2fe;
+  border-radius: var(--radius-md);
+  background: #eef2ff;
+  color: var(--primary-dark);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.ticket-print-btn:hover {
+  background: #e0e7ff;
+  border-color: var(--primary-light);
+  transform: translateY(-1px);
+}
+.repair-ticket-print-sheet { display: none; }
+.repair-print-document {
+  width: 100%;
+  color: #111827;
+  background: #fff;
+  font-family: 'Sarabun', 'Prompt', sans-serif;
+  font-size: 12pt;
+}
+.repair-print-header {
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 3px solid #312e81;
+}
+.repair-print-logo {
+  width: 52px; height: 52px; display: grid; place-items: center;
+  border-radius: 12px; background: #eef2ff; color: #4338ca; font-size: 24px;
+}
+.repair-print-header p, .repair-print-header h1 { margin: 0; }
+.repair-print-header p { color: #475569; font-size: 10pt; }
+.repair-print-header h1 { color: #1e1b4b; font-size: 24pt; line-height: 1.15; }
+.repair-print-number { text-align: right; }
+.repair-print-number span, .repair-print-section span, .repair-print-detail > span {
+  display: block; color: #64748b; font-size: 9.5pt;
+}
+.repair-print-number strong { display: block; margin-top: 2px; color: #312e81; font-size: 14pt; }
+.repair-print-status-row {
+  display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px;
+  margin: 14px 0; padding: 10px 12px; border: 1px solid #cbd5e1;
+  border-radius: 8px; background: #f8fafc;
+}
+.repair-print-section {
+  margin-top: 14px; border: 1px solid #cbd5e1; border-radius: 8px;
+  overflow: hidden; break-inside: avoid;
+}
+.repair-print-section h2 {
+  margin: 0; padding: 7px 10px; color: #1e1b4b; background: #eef2ff;
+  border-bottom: 1px solid #cbd5e1; font-size: 12pt;
+}
+.repair-print-grid { display: grid; grid-template-columns: 1.1fr 1fr 0.8fr; }
+.repair-print-grid-two { grid-template-columns: 1fr 1.5fr; }
+.repair-print-grid > div {
+  min-height: 56px; padding: 9px 10px; border-right: 1px solid #e2e8f0;
+}
+.repair-print-grid > div:last-child { border-right: 0; }
+.repair-print-detail { min-height: 78px; padding: 9px 10px; border-top: 1px solid #e2e8f0; }
+.repair-print-detail p { margin: 5px 0 0; white-space: pre-wrap; }
+.repair-print-signatures {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 50px;
+  margin-top: 48px; text-align: center; line-height: 2; break-inside: avoid;
+}
+.repair-print-generated { margin-top: 30px; color: #64748b; font-size: 8.5pt; text-align: right; }
+@media print {
+  body.printing-repair-ticket { display: block !important; background: #fff !important; }
+  body.printing-repair-ticket > :not(.main-content) { display: none !important; }
+  body.printing-repair-ticket .main-content {
+    display: block !important; max-width: none !important; margin: 0 !important; padding: 0 !important;
+  }
+  body.printing-repair-ticket .main-content > :not(#repair-ticket-print-sheet) { display: none !important; }
+  body.printing-repair-ticket #repair-ticket-print-sheet { display: block !important; }
+  @page { size: A4 portrait; margin: 14mm; }
+}
