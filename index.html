@@ -57,7 +57,7 @@
   <!-- Font Awesome CDN for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css?v=20260924-mobile-sync">
+  <link rel="stylesheet" href="styles.css?v=20261106-print-line">
 </head>
 <body>
 
@@ -396,7 +396,7 @@
               <option value="completed">เสร็จแล้ว</option>
             </select>
           </div>
-          <button id="reset-filter-btn" class="btn btn-icon-only" title="ล้างตัวกรอง">
+          <button id="reset-filter-btn" class="btn btn-icon-only" type="button" title="ล้างคำค้นหา ประเภทอุปกรณ์ และสถานะ">
             <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง
           </button>
         </div>
@@ -545,6 +545,7 @@
       </section>
     </div>
 
+    <section id="repair-ticket-print-sheet" class="repair-ticket-print-sheet print-only" aria-label="ใบแจ้งซ่อมสำหรับพิมพ์"></section>
   </main>
 
   <!-- Modals & Dialogs Container -->
@@ -885,6 +886,6 @@
   <!-- Supabase loads after the HTML has been parsed. Chart.js is loaded only
        when an admin opens the analytics dashboard. -->
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="script.js?v=20260924-mobile-sync"></script>
+  <script defer src="script.js?v=20261106-print-line"></script>
 </body>
 </html>
